@@ -6,14 +6,16 @@ services:
       POSTGRES_DB: postgres
       POSTGRES_PASSWORD_FILE: /run/secrets/postgres_admin_password
       POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256 --auth-local=peer
+    # TLS only: the server certificate and key are delivered at the engine's fixed targets (0444 and 0600,
+    # owned by uid 999). hostnossl rules reject plaintext before any accepting rule.
     command:
-      - postgres
+      - sh
       - -c
-      - max_connections=${STACKPUDDLE_POSTGRES_MAX_CONNECTIONS:-100}
-      - -c
-      - shared_buffers=${STACKPUDDLE_POSTGRES_SHARED_BUFFERS_MIB:-128}MB
-      - -c
-      - password_encryption=scram-sha-256
+      - |
+        mkdir -p /run/stackpuddle
+        printf '%s\n' 'local all all peer' 'hostnossl all all all reject' 'hostssl all all all scram-sha-256' > /run/stackpuddle/pg_hba.conf
+        chmod 0444 /run/stackpuddle/pg_hba.conf
+        exec docker-entrypoint.sh postgres -c password_encryption=scram-sha-256 -c max_connections=${STACKPUDDLE_POSTGRES_MAX_CONNECTIONS:-100} -c shared_buffers=${STACKPUDDLE_POSTGRES_SHARED_BUFFERS_MIB:-128}MB -c ssl=on -c ssl_cert_file=/run/stackpuddle/tls/server.crt -c ssl_key_file=/run/stackpuddle/tls/server.key -c hba_file=/run/stackpuddle/pg_hba.conf
     secrets:
       - source: postgres_admin
         target: postgres_admin_password
@@ -30,6 +32,15 @@ services:
       start_period: 10s
     stop_grace_period: 30s
     restart: unless-stopped
+    # The entrypoint needs only these to own the data directory and drop to the postgres user.
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
     security_opt:
       - no-new-privileges:true
 

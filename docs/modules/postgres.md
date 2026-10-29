@@ -86,12 +86,55 @@ This unpublished configuration replaces the earlier fixed `access.runtime` / `ac
 shape. Move credentials into `users`, declare permission roles, and specify each database's owner,
 connection roles, and schema grants. Move identity timeout overrides into database `userSettings`.
 The old shape is rejected; no automatic conversion is provided. This change does not alter the
-stable outer Manifest or Lock contracts. Module parser compatibility remains undeclared.
+stable outer Manifest or Lock contracts. The module requires the `module.postgres/1` and
+`runtime.compose/1` capabilities and keeps its data in the `postgresql/18` format; see
+[the model contract](../model.md).
 
 [Defaults](../../modules/postgres/content/configuration/defaults.yaml) supply 1024 MiB memory, one
 CPU, disabled host access with port 5432, a 60-second startup timeout, 100 maximum connections, and
 128 MiB shared buffers. They contain no access declarations. Consumers must supply `users`, `roles`,
-and `databases`. Validation does not insert defaults or merge documents.
+and `databases`. That file is the one home of the defaults: the table in
+[Compose development draft](#compose-development-draft) restates it, and a contract test fails when
+the two differ. The model merges the defaults under the declared options and an environment's
+override (`Project.EffectiveOptions`, `Project.EnvironmentOptions`); the semantic rules below check the
+merged result.
+
+## Semantic rules
+
+The Go package `validation/postgres` checks the relationships the schema cannot express. It is pure:
+it reads the merged options and returns diagnostics, with no file, network, clock or environment
+access, so a failure causes no Docker or database mutation. `validation.Validate` runs it for every
+postgres instance, in the project and in each environment that overrides it, after the option schema
+accepts the merged options. A user has access to a database when it owns the database or is a member
+of one of its `connectRoles`.
+
+1. A name is not both a user and a role.
+2. Every `memberOf`, `connectRoles` and schema grant name is a declared role. Every database `owner`
+   and `userSettings` key is a declared user.
+3. A database owner is a migration user, and one migration user owns at most one database.
+4. Every grantee of a database's schemas is among that database's `connectRoles`.
+5. Every `userSettings` key names a user with access to that database.
+
+A rule that depends on a name that failed rule 2 is not reported for it, so each fault has one root
+cause. Several databases, several schemas and runtime users sharing a role stay valid; sharing never
+gives a runtime user migration ownership. Each finding has a stable code and a pointer into the
+options; messages name pointers and keys, never a value written in the options.
+
+| Rule | Code | Pointer |
+| --- | --- | --- |
+| 1 | `postgres.shared_role_name` | `/roles/<name>` |
+| 2 | `postgres.unknown_member_role` | `/users/<user>/memberOf/<index>` |
+| 2 | `postgres.unknown_owner` | `/databases/<database>/owner` |
+| 2 | `postgres.unknown_connect_role` | `/databases/<database>/connectRoles/<index>` |
+| 2 | `postgres.unknown_grantee` | `/databases/<database>/schemas/<schema>/grants/<role>` |
+| 2 | `postgres.unknown_settings_user` | `/databases/<database>/userSettings/<user>` |
+| 3 | `postgres.owner_not_migration_user` | `/databases/<database>/owner` |
+| 3 | `postgres.migration_user_owns_multiple_databases` | `/databases/<database>/owner`, the second and later in key order |
+| 4 | `postgres.grantee_without_connect` | `/databases/<database>/schemas/<schema>/grants/<role>` |
+| 5 | `postgres.settings_user_without_access` | `/databases/<database>/userSettings/<user>` |
+
+Diagnostics point into the file that wrote the offending value, which for an environment's override
+is the override. The [conformance cases](../../tests/conformance/cases/semantics) show each code.
 
 ## Verification boundary
 
@@ -99,14 +142,10 @@ Contract tests exercise valid examples, required fields, privilege restrictions,
 name rules, scoped settings, and instance limits. Declaration counts do not establish server capacity.
 The strict YAML test decoder rejects duplicate keys and aliases; the CLI parser is still planned.
 
-JSON Schema validates structure, not references or effective access. Before any mutation, a future
-semantic validator must reject:
+JSON Schema validates structure, not references or effective access. The rules in
+[Semantic rules](#semantic-rules) check references and ownership before any mutation. These checks
+remain future work, because they need a running PostgreSQL instance or a provisioner:
 
-- Unknown user or role references, and names shared between `users` and `roles`.
-- A database owner whose purpose is not `migrations`, or one migration identity owning multiple
-  managed databases.
-- Grants to roles absent from the database's `connectRoles`.
-- User overrides for identities without declared access to that database.
 - Undeclared database connection access through direct grants, memberships, ownership, or `PUBLIC`,
   including built-in and unmanaged databases. Evaluate prospective access for new users; incomplete
   inspection must fail closed. Authentication/ACL changes outside the managed resources need a
@@ -128,14 +167,26 @@ access with database state. Explanations must distinguish direct grants, inherit
 ownership, and role-switching authority. Future-object defaults and row-security policies must be
 shown separately. Command syntax and output schemas are not implemented or frozen.
 
-Application migration tools consume endpoint, database, migration identity, credential references,
-and TLS settings through future bindings. Applications retain their migration scripts and history;
-StackPuddle does not depend on Evolve, EF Core, or Flyway. Runtime bindings use separate credentials.
-Administrator credentials must never be exported as application bindings.
+## Connection bindings and TLS
+
+The server accepts encrypted connections only. `pg_hba.conf` is written in order: `local all all peer`,
+`hostnossl all all all reject`, `hostssl all all all scram-sha-256`, so plaintext is rejected before any
+accepting rule. The engine delivers the server certificate and key to `/run/stackpuddle/tls/server.crt`
+(0444) and `server.key` (0600), owned by uid 999. Consumers trust the delivered `ca` and connect with
+`sslmode=verify-full`.
+
+The `server` workload exports `sql` (capability `postgresql.connection/1`). A binding passes the
+parameters `{user, database}` and receives four values: `database` and `username` (public), `password`
+(secret, delivered as a file) and `ca` (public). `host` and `port` come from the engine. Runtime and
+migration bindings name different users and receive different credentials. The administrator role is never
+exported. Host access (`hostAccess`) is still refused.
+
+Applications retain their migration scripts and history; StackPuddle does not depend on Evolve, EF Core, or
+Flyway. Inspection commands that explain effective permissions are not implemented or frozen.
 
 ## Compose development draft
 
-These Compose files are development drafts, not a finished runtime adapter. TLS is not configured: the draft neither configures nor enforces it.
+These Compose files are development drafts, not a finished runtime adapter. The draft carries the same TLS flags and `pg_hba` rules as `module.yaml` and expects the certificate and key at the paths above; it does not issue them.
 
 The image is PostgreSQL 18.6 on Debian Bookworm, pinned by a multi-platform image digest in Compose.
 The data volume mounts at `/var/lib/postgresql`, matching the PostgreSQL 18 image layout. Changing

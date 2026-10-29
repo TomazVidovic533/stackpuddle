@@ -11,3 +11,38 @@ runtimes:
     hostAccessFile: content/runtime/compose.host.yaml
 provisioning:
   contract: content/provisioning/contract.md
+requires:
+  capabilities: [module.postgres/1, runtime.compose/1]
+dataFormat: postgresql/18
+workloads:
+  server:
+    type: service
+    image: postgres:18.6-bookworm@sha256:1c59e2c3c818eaa0f0628f695b36e7c9e362d6b219b36a54a32df645cbd7e1af
+    environment:
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256 --auth-local=peer
+    # The superuser password is random, lives only inside the container and is cleared by the driver:
+    # administration is the in-container socket with peer authentication, never a stored password.
+    command:
+      - sh
+      - -c
+      - |
+        mkdir -p /run/stackpuddle
+        printf '%s\n' 'local all all peer' 'hostnossl all all all reject' 'hostssl all all all scram-sha-256' > /run/stackpuddle/pg_hba.conf
+        chmod 0444 /run/stackpuddle/pg_hba.conf
+        POSTGRES_PASSWORD=$(od -An -tx1 -N32 /dev/urandom | tr -d ' \n') exec docker-entrypoint.sh postgres -c password_encryption=scram-sha-256 -c max_connections=100 -c shared_buffers=128MB -c ssl=on -c ssl_cert_file=/run/stackpuddle/tls/server.crt -c ssl_key_file=/run/stackpuddle/tls/server.key -c hba_file=/run/stackpuddle/pg_hba.conf
+    listeners:
+      sql:
+        port: 5432
+        protocol: tcp
+    exports:
+      sql:
+        capability: postgresql.connection/1
+        listener: sql
+        values:
+          database: {sensitivity: public}
+          username: {sensitivity: public}
+          password: {sensitivity: secret}
+          ca: {sensitivity: public}
+    volumes:
+      data:
+        path: /var/lib/postgresql
