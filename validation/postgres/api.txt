@@ -1,0 +1,72 @@
+package postgres // import "github.com/TomazVidovic533/stackpuddle/validation/postgres"
+
+Package postgres holds the pure semantic rules of the postgres module's options:
+the relationships between users, roles, databases, schemas and settings that the
+module's JSON Schema cannot express. It reads bytes and returns diagnostics;
+it never touches the file system, the network, the clock or the environment.
+
+The package sits outside modules/, whose archive layout rejects Go files.
+"Module semantics live in modules" means the module boundary, not that
+directory: this package is the postgres module's Go half, and modules/postgres/
+is its content half.
+
+CONSTANTS
+
+const (
+	// CodeSharedRoleName reports a name declared both under users and under roles. Its pointer is
+	// the role.
+	CodeSharedRoleName model.Code = "postgres.shared_role_name"
+	// CodeUnknownMemberRole reports a memberOf entry that is not a declared role.
+	CodeUnknownMemberRole model.Code = "postgres.unknown_member_role"
+	// CodeUnknownOwner reports a database owner that is not a declared user.
+	CodeUnknownOwner model.Code = "postgres.unknown_owner"
+	// CodeUnknownConnectRole reports a connectRoles entry that is not a declared role.
+	CodeUnknownConnectRole model.Code = "postgres.unknown_connect_role"
+	// CodeUnknownGrantee reports a schema grant to a name that is not a declared role.
+	CodeUnknownGrantee model.Code = "postgres.unknown_grantee"
+	// CodeUnknownSettingsUser reports a userSettings key that is not a declared user.
+	CodeUnknownSettingsUser model.Code = "postgres.unknown_settings_user"
+	// CodeOwnerNotMigrationUser reports a database owner whose purpose is not migrations.
+	CodeOwnerNotMigrationUser model.Code = "postgres.owner_not_migration_user"
+	// CodeMigrationUserOwnsManyDatabases reports a migration user that owns a second or later
+	// database. Its pointer is that database's owner.
+	CodeMigrationUserOwnsManyDatabases model.Code = "postgres.migration_user_owns_multiple_databases"
+	// CodeGranteeWithoutConnect reports a schema grantee that is not among its database's
+	// connectRoles.
+	CodeGranteeWithoutConnect model.Code = "postgres.grantee_without_connect"
+	// CodeSettingsUserWithoutAccess reports a userSettings key for a user that has no access to
+	// the database.
+	CodeSettingsUserWithoutAccess model.Code = "postgres.settings_user_without_access"
+)
+    The stable codes of the postgres rules, "postgres.<rule>". Each is a
+    published name: it is kept or retired explicitly, never renamed. Messages
+    are for people and are not part of the contract.
+
+
+FUNCTIONS
+
+func Validate(raw json.RawMessage) (model.Diagnostics, error)
+    Validate checks options, the effective options of one postgres instance that
+    already satisfy the module's option schema, and returns one diagnostic per
+    violation. Pointers are relative to options and carry no file or position,
+    as ModuleDefinition.ValidateOptions reports them; a caller places them with
+    model.Diagnostic.At. The order is deterministic and sorted. Messages name
+    pointers and map keys, never a value written in options.
+
+    The rules (a user has access to a database when it owns it or is a member of
+    one of its connectRoles):
+
+     1. a name is not both a user and a role;
+     2. every memberOf, connectRoles and grant name is a declared role,
+        and every database owner and userSettings key is a declared user;
+     3. an owner is a migration user, and one migration user owns at most one
+        database;
+     4. every grantee of a database's schemas is among that database's
+        connectRoles;
+     5. every userSettings key names a user with access to that database.
+
+    A rule that depends on a name that failed rule 2 is not reported for it,
+    so each fault has one root cause. Shared runtime users and several databases
+    are valid. The error is non-nil only when options do not decode, which means
+    the schema precondition did not hold.
+

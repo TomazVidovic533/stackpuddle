@@ -10,6 +10,8 @@ import (
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
 	"github.com/santhosh-tekuri/jsonschema/v6/kind"
+
+	"github.com/TomazVidovic533/stackpuddle/tests/internal/testkit/documents"
 )
 
 const postgresSchemaID = "urn:stackpuddle:module:postgres:configuration"
@@ -42,7 +44,7 @@ func TestPostgresConfigurationDefaults(t *testing.T) {
 			t.Fatalf("invalid %s defaults: %v", name, err)
 		}
 	}
-	hostAccess := objectAtPath(t, defaults, []string{"hostAccess"})
+	hostAccess := documents.ObjectAt(t, map[string]any(defaults), []string{"hostAccess"})
 	if hostAccess["enabled"] != false {
 		t.Fatal("host access must be disabled by default")
 	}
@@ -215,7 +217,7 @@ func TestPostgresConfigurationNames(t *testing.T) {
 		for _, name := range append(append([]string{}, invalidIdentifiers...), test.reserved...) {
 			t.Run(test.name+"/"+name, func(t *testing.T) {
 				document := postgresFixture(t, "multiple-databases.yaml")
-				object := objectAtPath(t, document, test.path)
+				object := documents.ObjectAt(t, map[string]any(document), test.path)
 				object[name] = object[test.key]
 				delete(object, test.key)
 				if err := schema.Validate(map[string]any(document)); err == nil {

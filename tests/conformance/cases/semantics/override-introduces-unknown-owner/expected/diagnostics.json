@@ -1,0 +1,9 @@
+[
+  {
+    "code": "postgres.unknown_owner",
+    "column": 19,
+    "file": "stackpuddle.yaml",
+    "line": 47,
+    "pointer": "/spec/environments/local/overrides/modules/db/options/databases/application/owner"
+  }
+]

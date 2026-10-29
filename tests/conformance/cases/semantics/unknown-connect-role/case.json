@@ -1,0 +1,10 @@
+{
+  "description": "A database lets a role connect that nobody declared.",
+  "packaged": [
+    {
+      "repository": "postgres"
+    }
+  ],
+  "root": "stackpuddle.yaml",
+  "subject": "semantics"
+}

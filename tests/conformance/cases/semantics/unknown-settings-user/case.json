@@ -1,0 +1,10 @@
+{
+  "description": "Timeout settings name a user nobody declared.",
+  "packaged": [
+    {
+      "repository": "postgres"
+    }
+  ],
+  "root": "stackpuddle.yaml",
+  "subject": "semantics"
+}

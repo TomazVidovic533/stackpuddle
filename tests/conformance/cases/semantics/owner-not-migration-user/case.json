@@ -1,0 +1,10 @@
+{
+  "description": "A database is owned by a runtime user.",
+  "packaged": [
+    {
+      "repository": "postgres"
+    }
+  ],
+  "root": "stackpuddle.yaml",
+  "subject": "semantics"
+}

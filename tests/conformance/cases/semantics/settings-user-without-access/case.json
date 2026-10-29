@@ -1,0 +1,10 @@
+{
+  "description": "Timeout settings name a user that neither owns the database nor belongs to one of its connect roles.",
+  "packaged": [
+    {
+      "repository": "postgres"
+    }
+  ],
+  "root": "stackpuddle.yaml",
+  "subject": "semantics"
+}

@@ -1,0 +1,43 @@
+users:
+  catalog_app:
+    purpose: runtime
+    passwordSecretRef: catalog-app-password
+    memberOf: [catalog_writer, catalog_reader]
+  catalog_migrator:
+    purpose: migrations
+    passwordSecretRef: catalog-migration-password
+roles:
+  catalog_writer:
+    login: false
+  catalog_reader:
+    login: false
+databases:
+  catalog:
+    owner: catalog_migrator
+    connectRoles: [catalog_writer, catalog_reader]
+    connectionLimit: 25
+    settings:
+      statementTimeoutMs: 30000
+      lockTimeoutMs: 5000
+    userSettings:
+      catalog_app:
+        statementTimeoutMs: 15000
+        lockTimeoutMs: 2000
+    schemas:
+      public:
+        grants:
+          catalog_writer:
+            tables: [SELECT, INSERT, UPDATE, DELETE]
+            sequences: [USAGE, SELECT]
+          catalog_reader:
+            tables: [SELECT]
+resources:
+  memoryMiB: 2048
+  cpus: 1.5
+hostAccess:
+  enabled: true
+  port: 5433
+startupTimeoutSeconds: 90
+settings:
+  maxConnections: 120
+  sharedBuffersMiB: 256

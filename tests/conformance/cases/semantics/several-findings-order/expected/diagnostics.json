@@ -1,0 +1,44 @@
+[
+  {
+    "code": "postgres.unknown_member_role",
+    "column": 107,
+    "file": "stackpuddle.yaml",
+    "line": 11,
+    "pointer": "/spec/modules/db/options/users/app_runtime/memberOf/1"
+  },
+  {
+    "code": "postgres.shared_role_name",
+    "column": 11,
+    "file": "stackpuddle.yaml",
+    "line": 18,
+    "pointer": "/spec/modules/db/options/roles/app_runtime"
+  },
+  {
+    "code": "postgres.unknown_settings_user",
+    "column": 15,
+    "file": "stackpuddle.yaml",
+    "line": 31,
+    "pointer": "/spec/modules/db/options/databases/application/userSettings/ghost_user"
+  },
+  {
+    "code": "postgres.grantee_without_connect",
+    "column": 19,
+    "file": "stackpuddle.yaml",
+    "line": 39,
+    "pointer": "/spec/modules/db/options/databases/reporting/schemas/reports/grants/app_auditor"
+  },
+  {
+    "code": "postgres.settings_user_without_access",
+    "column": 15,
+    "file": "stackpuddle.yaml",
+    "line": 41,
+    "pointer": "/spec/modules/db/options/databases/reporting/userSettings/reporting_migrator"
+  },
+  {
+    "code": "postgres.migration_user_owns_multiple_databases",
+    "column": 19,
+    "file": "stackpuddle.yaml",
+    "line": 52,
+    "pointer": "/spec/environments/local/overrides/modules/db/options/databases/reporting/owner"
+  }
+]

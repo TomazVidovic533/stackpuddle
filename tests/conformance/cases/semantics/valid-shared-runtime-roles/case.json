@@ -1,0 +1,10 @@
+{
+  "description": "Three runtime users share one permission role. Sharing a role gives them no migration ownership, and each has settings for the database it reaches through that role.",
+  "packaged": [
+    {
+      "repository": "postgres"
+    }
+  ],
+  "root": "stackpuddle.yaml",
+  "subject": "semantics"
+}

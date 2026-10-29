@@ -1,0 +1,10 @@
+{
+  "description": "A schema grants privileges to a declared role that cannot connect to the database.",
+  "packaged": [
+    {
+      "repository": "postgres"
+    }
+  ],
+  "root": "stackpuddle.yaml",
+  "subject": "semantics"
+}

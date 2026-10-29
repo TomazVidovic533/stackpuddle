@@ -1,0 +1,9 @@
+[
+  {
+    "code": "postgres.unknown_settings_user",
+    "column": 15,
+    "file": "stackpuddle.yaml",
+    "line": 29,
+    "pointer": "/spec/modules/db/options/databases/application/userSettings/ghost_user"
+  }
+]

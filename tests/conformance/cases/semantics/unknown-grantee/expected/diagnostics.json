@@ -1,0 +1,9 @@
+[
+  {
+    "code": "postgres.unknown_grantee",
+    "column": 19,
+    "file": "stackpuddle.yaml",
+    "line": 26,
+    "pointer": "/spec/modules/db/options/databases/application/schemas/app/grants/ghost_role"
+  }
+]

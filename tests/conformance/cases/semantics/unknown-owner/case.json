@@ -1,0 +1,10 @@
+{
+  "description": "A database is owned by a user nobody declared.",
+  "packaged": [
+    {
+      "repository": "postgres"
+    }
+  ],
+  "root": "stackpuddle.yaml",
+  "subject": "semantics"
+}

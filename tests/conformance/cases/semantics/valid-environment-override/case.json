@@ -1,0 +1,10 @@
+{
+  "description": "An environment override adds a runtime user and settings for it. The merged options satisfy every rule.",
+  "packaged": [
+    {
+      "repository": "postgres"
+    }
+  ],
+  "root": "stackpuddle.yaml",
+  "subject": "semantics"
+}

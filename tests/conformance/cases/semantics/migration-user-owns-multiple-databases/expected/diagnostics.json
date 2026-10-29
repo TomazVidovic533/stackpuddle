@@ -1,0 +1,9 @@
+[
+  {
+    "code": "postgres.migration_user_owns_multiple_databases",
+    "column": 13,
+    "file": "stackpuddle.yaml",
+    "line": 30,
+    "pointer": "/spec/modules/db/options/databases/reporting/owner"
+  }
+]

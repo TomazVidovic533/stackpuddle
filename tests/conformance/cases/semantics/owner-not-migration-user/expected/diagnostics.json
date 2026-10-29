@@ -1,0 +1,9 @@
+[
+  {
+    "code": "postgres.owner_not_migration_user",
+    "column": 13,
+    "file": "stackpuddle.yaml",
+    "line": 20,
+    "pointer": "/spec/modules/db/options/databases/application/owner"
+  }
+]

@@ -1,0 +1,10 @@
+{
+  "description": "Findings from several rules, in the project and in an environment override, come back sorted by file, line, column, pointer and code.",
+  "packaged": [
+    {
+      "repository": "postgres"
+    }
+  ],
+  "root": "stackpuddle.yaml",
+  "subject": "semantics"
+}

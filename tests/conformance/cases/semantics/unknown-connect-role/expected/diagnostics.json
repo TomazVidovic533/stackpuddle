@@ -1,0 +1,9 @@
+[
+  {
+    "code": "postgres.unknown_connect_role",
+    "column": 40,
+    "file": "stackpuddle.yaml",
+    "line": 21,
+    "pointer": "/spec/modules/db/options/databases/application/connectRoles/1"
+  }
+]

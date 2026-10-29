@@ -1,0 +1,23 @@
+[
+  {
+    "code": "postgres.unknown_member_role",
+    "column": 103,
+    "file": "stackpuddle.yaml",
+    "line": 11,
+    "pointer": "/spec/modules/db/options/users/app_runtime/memberOf/1"
+  },
+  {
+    "code": "postgres.unknown_owner",
+    "column": 13,
+    "file": "stackpuddle.yaml",
+    "line": 20,
+    "pointer": "/spec/modules/db/options/databases/application/owner"
+  },
+  {
+    "code": "postgres.settings_user_without_access",
+    "column": 15,
+    "file": "stackpuddle.yaml",
+    "line": 28,
+    "pointer": "/spec/modules/db/options/databases/application/userSettings/app_migrator"
+  }
+]

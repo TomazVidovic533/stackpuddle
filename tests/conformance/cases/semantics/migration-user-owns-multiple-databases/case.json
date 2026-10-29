@@ -1,0 +1,10 @@
+{
+  "description": "One migration user owns two databases. The second in key order is reported.",
+  "packaged": [
+    {
+      "repository": "postgres"
+    }
+  ],
+  "root": "stackpuddle.yaml",
+  "subject": "semantics"
+}

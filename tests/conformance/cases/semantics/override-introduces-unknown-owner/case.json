@@ -1,0 +1,10 @@
+{
+  "description": "The base options are valid; the local override gives the application database an owner nobody declared. The finding is reported once, at the override.",
+  "packaged": [
+    {
+      "repository": "postgres"
+    }
+  ],
+  "root": "stackpuddle.yaml",
+  "subject": "semantics"
+}

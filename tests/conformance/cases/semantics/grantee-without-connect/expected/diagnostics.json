@@ -1,0 +1,9 @@
+[
+  {
+    "code": "postgres.grantee_without_connect",
+    "column": 19,
+    "file": "stackpuddle.yaml",
+    "line": 27,
+    "pointer": "/spec/modules/db/options/databases/application/schemas/app/grants/app_auditor"
+  }
+]

@@ -1,0 +1,44 @@
+apiVersion: stackpuddle/v1
+kind: Project
+metadata:
+  name: shop
+spec:
+  modules:
+    db:
+      definition: postgres
+      options:
+        users:
+          app_runtime: {purpose: runtime, passwordSecretRef: app-runtime-password, memberOf: [app_writer, ghost_role]}
+          app_migrator: {purpose: migrations, passwordSecretRef: app-migrator-password}
+          reporting_app: {purpose: runtime, passwordSecretRef: reporting-app-password, memberOf: [reporting_reader]}
+          reporting_migrator: {purpose: migrations, passwordSecretRef: reporting-migrator-password}
+        roles:
+          app_writer: {login: false}
+          reporting_reader: {login: false}
+        databases:
+          application:
+            owner: app_migrator
+            connectRoles: [app_writer]
+            schemas:
+              app:
+                grants:
+                  app_writer: {tables: [SELECT, INSERT]}
+            userSettings:
+              app_runtime: {statementTimeoutMs: 15000}
+              app_migrator: {lockTimeoutMs: 5000}
+          reporting:
+            owner: reporting_migrator
+            connectRoles: [reporting_reader]
+            schemas:
+              reports:
+                grants:
+                  reporting_reader: {tables: [SELECT]}
+            userSettings:
+              reporting_migrator: {statementTimeoutMs: 0}
+  environments:
+    local:
+      runtime: {type: compose, context: desktop-linux}
+      secrets: {provider: local}
+    ci:
+      runtime: {type: compose, context: ci-runner}
+      secrets: {provider: env}

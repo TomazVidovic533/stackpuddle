@@ -1,0 +1,9 @@
+[
+  {
+    "code": "postgres.shared_role_name",
+    "column": 11,
+    "file": "stackpuddle.yaml",
+    "line": 18,
+    "pointer": "/spec/modules/db/options/roles/app_runtime"
+  }
+]

@@ -1,0 +1,9 @@
+[
+  {
+    "code": "postgres.settings_user_without_access",
+    "column": 15,
+    "file": "stackpuddle.yaml",
+    "line": 29,
+    "pointer": "/spec/modules/db/options/databases/application/userSettings/reporting_app"
+  }
+]

@@ -1,0 +1,36 @@
+package validation // import "github.com/TomazVidovic533/stackpuddle/validation"
+
+Package validation runs the pure semantic validator of each module a project
+uses. The catalog lists every validator explicitly; nothing registers itself.
+Module semantics live behind the module boundary: this package holds the Go
+rules, modules/<name>/ holds the module content, and neither depends on the
+other's directory. Every caller that checks a project uses this package rather
+than a copy.
+
+FUNCTIONS
+
+func Modules() []model.ModuleName
+    Modules returns the names of the modules that have a semantic validator,
+    sorted.
+
+
+TYPES
+
+type Result struct {
+	// Diagnostics are the findings, sorted by file, line, column, pointer and code.
+	Diagnostics model.Diagnostics
+	// Unchecked names the definitions that were not checked because they are unresolved or are
+	// packaged with no validator in the catalog; sorted, unique. A caller that provisions must
+	// refuse a project while this is non-empty.
+	Unchecked []model.ModuleName
+}
+    Result is the outcome of Validate.
+
+func Validate(p model.Project) (Result, error)
+    Validate checks every module instance of p, at project level and in each
+    environment that overrides it: first the effective options against the
+    definition's option schema, then, when that is clean and the catalog has
+    the module, its semantic rules. It is pure: no I/O, clock or environment.
+    The error reports a programming fault only (a validator emitted a code the
+    model refuses, or options that passed the schema did not decode).
+

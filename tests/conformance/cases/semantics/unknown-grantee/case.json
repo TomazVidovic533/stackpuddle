@@ -1,0 +1,10 @@
+{
+  "description": "A schema grants privileges to a role nobody declared.",
+  "packaged": [
+    {
+      "repository": "postgres"
+    }
+  ],
+  "root": "stackpuddle.yaml",
+  "subject": "semantics"
+}

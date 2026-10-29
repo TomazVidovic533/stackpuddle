@@ -1,0 +1,10 @@
+{
+  "description": "Unknown references and a timeout carry canary values that no diagnostic message may repeat.",
+  "packaged": [
+    {
+      "repository": "postgres"
+    }
+  ],
+  "root": "stackpuddle.yaml",
+  "subject": "semantics"
+}

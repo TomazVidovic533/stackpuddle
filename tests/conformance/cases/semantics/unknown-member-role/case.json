@@ -1,0 +1,10 @@
+{
+  "description": "A runtime user is a member of a role nobody declared.",
+  "packaged": [
+    {
+      "repository": "postgres"
+    }
+  ],
+  "root": "stackpuddle.yaml",
+  "subject": "semantics"
+}

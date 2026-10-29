@@ -1,0 +1,10 @@
+{
+  "description": "The name app_runtime is both a login user and a permission role.",
+  "packaged": [
+    {
+      "repository": "postgres"
+    }
+  ],
+  "root": "stackpuddle.yaml",
+  "subject": "semantics"
+}

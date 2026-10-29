@@ -1,0 +1,9 @@
+[
+  {
+    "code": "postgres.unknown_member_role",
+    "column": 107,
+    "file": "stackpuddle.yaml",
+    "line": 11,
+    "pointer": "/spec/modules/db/options/users/app_runtime/memberOf/1"
+  }
+]

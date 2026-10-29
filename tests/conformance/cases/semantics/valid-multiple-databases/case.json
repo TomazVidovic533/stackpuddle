@@ -1,0 +1,10 @@
+{
+  "description": "Three databases, each with its own migration owner, one with two schemas, sharing two permission roles.",
+  "packaged": [
+    {
+      "repository": "postgres"
+    }
+  ],
+  "root": "stackpuddle.yaml",
+  "subject": "semantics"
+}
