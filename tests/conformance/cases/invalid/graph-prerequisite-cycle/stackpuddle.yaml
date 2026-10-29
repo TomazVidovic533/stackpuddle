@@ -1,0 +1,16 @@
+apiVersion: stackpuddle/v1
+kind: Project
+metadata:
+  name: shop
+spec:
+  workloads:
+    seed:
+      type: job
+      image: ghcr.io/example/seed:2.0.0
+      prerequisites:
+        - job: migrate
+    migrate:
+      type: job
+      image: ghcr.io/example/api:1.4.2
+      prerequisites:
+        - job: seed

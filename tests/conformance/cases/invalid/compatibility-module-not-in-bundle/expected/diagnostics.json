@@ -1,0 +1,9 @@
+[
+  {
+    "code": "compatibility.module_not_in_bundle",
+    "column": 3,
+    "file": "stackpuddle.lock.yaml",
+    "line": 13,
+    "pointer": "/modules/queue-cache"
+  }
+]

@@ -1,0 +1,9 @@
+[
+  {
+    "code": "structure.invalid_schema",
+    "column": 3,
+    "file": "definitions/host-reader/module.yaml",
+    "line": 6,
+    "pointer": "/configuration/schema"
+  }
+]

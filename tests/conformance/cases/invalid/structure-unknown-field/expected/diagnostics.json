@@ -1,0 +1,9 @@
+[
+  {
+    "code": "structure.unknown_field",
+    "column": 7,
+    "file": "stackpuddle.yaml",
+    "line": 10,
+    "pointer": "/spec/workloads/api/replicas"
+  }
+]

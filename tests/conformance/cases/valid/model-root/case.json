@@ -1,0 +1,5 @@
+{
+  "description": "A canonical Model file as the root, as an authoring SDK writes it: it loads as is and encodes to the same bytes, provenance and SDK patch records included.",
+  "root": "stackpuddle.model.json",
+  "subject": "project"
+}

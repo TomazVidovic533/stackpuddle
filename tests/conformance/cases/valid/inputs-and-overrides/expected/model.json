@@ -1,0 +1,174 @@
+{
+  "apiVersion": "stackpuddle/v1",
+  "kind": "Model",
+  "metadata": {
+    "name": "shop"
+  },
+  "provenance": {
+    "env/ci": {
+      "declared": {
+        "column": 5,
+        "file": "stackpuddle.yaml",
+        "line": 68,
+        "origin": "yaml"
+      }
+    },
+    "env/local": {
+      "declared": {
+        "column": 5,
+        "file": "stackpuddle.yaml",
+        "line": 40,
+        "origin": "yaml"
+      }
+    },
+    "module/primary": {
+      "declared": {
+        "column": 5,
+        "file": "stackpuddle.yaml",
+        "line": 23,
+        "origin": "yaml"
+      }
+    },
+    "workload/api": {
+      "declared": {
+        "column": 5,
+        "file": "stackpuddle.yaml",
+        "line": 13,
+        "origin": "yaml"
+      }
+    }
+  },
+  "spec": {
+    "environments": {
+      "ci": {
+        "runtime": {
+          "context": "ci-runner",
+          "type": "compose"
+        },
+        "secrets": {
+          "provider": "env"
+        }
+      },
+      "local": {
+        "inputs": {
+          "api-log-level": {
+            "value": "debug"
+          },
+          "api-token": {
+            "local": {
+              "file": ".env.local",
+              "key": "API_TOKEN"
+            },
+            "process": "SHOP_API_TOKEN"
+          }
+        },
+        "metadata": {
+          "description": "The developer machine."
+        },
+        "overrides": {
+          "modules": {
+            "primary": {
+              "options": {
+                "hostAccess": {
+                  "enabled": true,
+                  "port": 55432
+                },
+                "startupTimeoutSeconds": 120
+              }
+            }
+          },
+          "workloads": {
+            "api": {
+              "environment": {
+                "MODE": "verbose"
+              }
+            }
+          }
+        },
+        "runtime": {
+          "context": "desktop-linux",
+          "type": "compose"
+        },
+        "secrets": {
+          "provider": "local"
+        }
+      }
+    },
+    "inputs": {
+      "api-log-level": {
+        "sensitivity": "public",
+        "value": "info"
+      },
+      "api-token": {
+        "sensitivity": "secret"
+      }
+    },
+    "objects": [
+      {
+        "apiVersion": "stackpuddle/v1",
+        "key": "primary",
+        "kind": "ModuleInstance",
+        "spec": {
+          "definition": "postgres",
+          "options": {
+            "databases": {
+              "shop": {
+                "connectRoles": [
+                  "writer"
+                ],
+                "owner": "migrator",
+                "schemas": {
+                  "public": {
+                    "grants": {
+                      "writer": {
+                        "tables": [
+                          "SELECT"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "roles": {
+              "writer": {
+                "login": false
+              }
+            },
+            "users": {
+              "app": {
+                "memberOf": [
+                  "writer"
+                ],
+                "passwordSecretRef": "app-password",
+                "purpose": "runtime"
+              },
+              "migrator": {
+                "passwordSecretRef": "migrator-password",
+                "purpose": "migrations"
+              }
+            }
+          }
+        }
+      },
+      {
+        "apiVersion": "stackpuddle/v1",
+        "key": "api",
+        "kind": "Workload",
+        "spec": {
+          "environment": {
+            "API_TOKEN": {
+              "input": "api-token"
+            },
+            "LOG_LEVEL": {
+              "input": "api-log-level"
+            },
+            "MODE": "standard"
+          },
+          "image": "ghcr.io/example/api:1.4.2",
+          "type": "service"
+        }
+      }
+    ]
+  }
+}

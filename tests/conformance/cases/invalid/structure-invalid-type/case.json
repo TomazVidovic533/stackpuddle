@@ -1,0 +1,5 @@
+{
+  "description": "A command written as one string instead of an argument list.",
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

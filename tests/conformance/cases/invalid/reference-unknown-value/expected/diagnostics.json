@@ -1,0 +1,9 @@
+[
+  {
+    "code": "reference.unknown_value",
+    "column": 11,
+    "file": "stackpuddle.yaml",
+    "line": 32,
+    "pointer": "/spec/bindings/0/delivery/environment/API_PASSWORD"
+  }
+]

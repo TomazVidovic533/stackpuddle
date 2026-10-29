@@ -1,0 +1,10 @@
+{
+  "description": "A packaged definition that is supplied but not listed in the Manifest.",
+  "packaged": [
+    {
+      "repository": "postgres"
+    }
+  ],
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:stackpuddle:module:audit-store:configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["retentionDays"],
+  "properties": {
+    "retentionDays": { "type": "integer", "minimum": 1, "maximum": 3650 },
+    "level": { "enum": ["summary", "full"] }
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "description": "VersionInfo of a build with no engine linked yet: the CLI build and the model API versions it reads.",
+  "root": "version-info.json",
+  "subject": "version-info"
+}

@@ -1,0 +1,9 @@
+[
+  {
+    "code": "reference.module_not_in_manifest",
+    "column": 7,
+    "file": "stackpuddle.yaml",
+    "line": 9,
+    "pointer": "/spec/modules/primary/definition"
+  }
+]

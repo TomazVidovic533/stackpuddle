@@ -1,0 +1,20 @@
+apiVersion: stackpuddle/v1
+kind: Fragment
+spec:
+  workloads:
+    web:
+      type: service
+      image: ghcr.io/example/web:3.0.0
+      dependencies:
+        api:
+          capability: http.api/1
+  applications:
+    storefront:
+      workloads: [web, api]
+      default: true
+  bindings:
+    - consumer: workload/web
+      dependency: api
+      source:
+        object: workload/api
+        export: http

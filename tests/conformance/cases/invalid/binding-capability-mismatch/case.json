@@ -1,0 +1,5 @@
+{
+  "description": "A binding whose source exports another capability than the Dependency needs.",
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

@@ -1,0 +1,117 @@
+{
+  "apiVersion": "stackpuddle/v1",
+  "kind": "Model",
+  "metadata": {
+    "name": "shop"
+  },
+  "provenance": {
+    "app/admin": {
+      "declared": {
+        "column": 5,
+        "file": "stackpuddle.yaml",
+        "line": 16,
+        "origin": "yaml"
+      }
+    },
+    "app/storefront": {
+      "declared": {
+        "column": 5,
+        "file": "stackpuddle.yaml",
+        "line": 11,
+        "origin": "yaml"
+      }
+    },
+    "env/local": {
+      "declared": {
+        "column": 5,
+        "file": "stackpuddle.yaml",
+        "line": 20,
+        "origin": "yaml"
+      }
+    },
+    "workload/api": {
+      "declared": {
+        "column": 5,
+        "file": "stackpuddle.yaml",
+        "line": 8,
+        "origin": "yaml"
+      }
+    },
+    "workload/backoffice": {
+      "declared": {
+        "column": 5,
+        "file": "stackpuddle.yaml",
+        "line": 9,
+        "origin": "yaml"
+      }
+    },
+    "workload/web": {
+      "declared": {
+        "column": 5,
+        "file": "stackpuddle.yaml",
+        "line": 7,
+        "origin": "yaml"
+      }
+    }
+  },
+  "spec": {
+    "applications": {
+      "admin": {
+        "workloads": [
+          "api",
+          "backoffice"
+        ]
+      },
+      "storefront": {
+        "default": true,
+        "metadata": {
+          "description": "What customers use."
+        },
+        "workloads": [
+          "api",
+          "web"
+        ]
+      }
+    },
+    "environments": {
+      "local": {
+        "runtime": {
+          "context": "desktop-linux",
+          "type": "compose"
+        },
+        "secrets": {
+          "provider": "local"
+        }
+      }
+    },
+    "objects": [
+      {
+        "apiVersion": "stackpuddle/v1",
+        "key": "api",
+        "kind": "Workload",
+        "spec": {
+          "image": "ghcr.io/example/api:1.4.2",
+          "type": "service"
+        }
+      },
+      {
+        "apiVersion": "stackpuddle/v1",
+        "key": "backoffice",
+        "kind": "Workload",
+        "spec": {
+          "image": "ghcr.io/example/backoffice:0.9.0",
+          "type": "service"
+        }
+      },
+      {
+        "apiVersion": "stackpuddle/v1",
+        "key": "web",
+        "kind": "Workload",
+        "spec": {
+          "image": "ghcr.io/example/web:3.0.0",
+          "type": "service"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "description": "A workload written as an alias of another.",
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

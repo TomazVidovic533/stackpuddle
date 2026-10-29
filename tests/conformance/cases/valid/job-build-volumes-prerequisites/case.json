@@ -1,0 +1,5 @@
+{
+  "description": "A service built from source with a command, an environment variable and a volume, started after two jobs that are themselves ordered.",
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

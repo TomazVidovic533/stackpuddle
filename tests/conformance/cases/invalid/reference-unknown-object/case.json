@@ -1,0 +1,5 @@
+{
+  "description": "An application lists a workload nobody declares.",
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

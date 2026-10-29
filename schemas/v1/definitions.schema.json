@@ -39,6 +39,475 @@
         "format": { "type": "string", "const": "tar+gzip" },
         "digest": { "$ref": "#/$defs/sha256" }
       }
+    },
+    "scopeName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 32,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+    },
+    "objectKey": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 30,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+    },
+    "capability": {
+      "type": "string",
+      "maxLength": 128,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*(?:\\.[a-z][a-z0-9]*(?:-[a-z0-9]+)*)+/[1-9][0-9]*$"
+    },
+    "dataFormat": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[0-9]+(?:\\.[0-9]+)*$"
+    },
+    "protocol": { "type": "string", "maxLength": 32, "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$" },
+    "providerId": { "type": "string", "maxLength": 32, "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$" },
+    "dockerContext": { "type": "string", "maxLength": 128, "pattern": "^[A-Za-z0-9][A-Za-z0-9_.+-]*$" },
+    "envKey": { "type": "string", "maxLength": 128, "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
+    "relativePath": {
+      "type": "string",
+      "maxLength": 240,
+      "pattern": "^\\.?[A-Za-z0-9_][A-Za-z0-9_.-]*(?:/\\.?[A-Za-z0-9_][A-Za-z0-9_.-]*)*$"
+    },
+    "contentPath": {
+      "type": "string",
+      "maxLength": 240,
+      "pattern": "^content(?:/\\.?[A-Za-z0-9_][A-Za-z0-9_.-]*)+$"
+    },
+    "containerPath": { "type": "string", "maxLength": 240, "pattern": "^(?:/[A-Za-z0-9_][A-Za-z0-9_.-]*)+$" },
+    "imageReference": {
+      "type": "string",
+      "maxLength": 255,
+      "pattern": "^(?:[a-z0-9]+(?:[._-][a-z0-9]+)*(?::[0-9]{1,5})?/)?[a-z0-9]+(?:(?:[._]|__|-+)[a-z0-9]+)*(?:/[a-z0-9]+(?:(?:[._]|__|-+)[a-z0-9]+)*)*(?::[A-Za-z0-9_][A-Za-z0-9_.-]{0,127})?(?:@sha256:[0-9a-f]{64})?$"
+    },
+    "objectRef": {
+      "type": "string",
+      "maxLength": 40,
+      "pattern": "^(?:workload|module|client)/[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+    },
+    "fileMode": { "type": "string", "enum": ["0400", "0440", "0444", "0600", "0640", "0644"] },
+    "owner": { "type": "string", "pattern": "^[0-9]{1,10}:[0-9]{1,10}$" },
+    "goVersion": {
+      "type": "string",
+      "pattern": "^(?:v[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?|\\(devel\\)|unknown)$"
+    },
+    "goToolchain": { "type": "string", "pattern": "^go[0-9]+\\.[0-9]+(?:\\.[0-9]+)?(?:[a-z][a-z0-9]*)?$" },
+    "platform": { "type": "string", "pattern": "^[a-z0-9]+/[a-z0-9]+$" },
+    "description": { "type": "string", "maxLength": 256 },
+    "sensitivity": { "type": "string", "enum": ["public", "secret"] },
+    "jsonPointer": { "type": "string", "maxLength": 240, "pattern": "^(?:/(?:[^~/]|~[01])*)+$" },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "description": { "$ref": "#/$defs/description" } }
+    },
+    "projectMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "$ref": "#/$defs/scopeName" },
+        "description": { "$ref": "#/$defs/description" }
+      }
+    },
+    "listener": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["port", "protocol"],
+      "properties": {
+        "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "protocol": { "$ref": "#/$defs/protocol" }
+      }
+    },
+    "exportValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sensitivity"],
+      "properties": { "sensitivity": { "$ref": "#/$defs/sensitivity" } }
+    },
+    "export": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capability", "listener"],
+      "properties": {
+        "capability": { "$ref": "#/$defs/capability" },
+        "listener": { "$ref": "#/$defs/objectKey" },
+        "values": {
+          "type": "object",
+          "maxProperties": 16,
+          "propertyNames": { "$ref": "#/$defs/objectKey", "not": { "enum": ["host", "port"] } },
+          "additionalProperties": { "$ref": "#/$defs/exportValue" }
+        }
+      }
+    },
+    "dependency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capability"],
+      "properties": { "capability": { "$ref": "#/$defs/capability" } }
+    },
+    "volume": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path"],
+      "properties": { "path": { "$ref": "#/$defs/containerPath" } }
+    },
+    "build": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["context"],
+      "properties": {
+        "context": { "$ref": "#/$defs/relativePath" },
+        "dockerfile": { "$ref": "#/$defs/relativePath" },
+        "target": { "type": "string", "maxLength": 64, "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$" }
+      }
+    },
+    "envValue": {
+      "oneOf": [
+        { "type": "string", "maxLength": 4096 },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["input"],
+          "properties": { "input": { "$ref": "#/$defs/objectKey" } }
+        }
+      ]
+    },
+    "environmentMap": {
+      "type": "object",
+      "maxProperties": 128,
+      "propertyNames": { "$ref": "#/$defs/envKey" },
+      "additionalProperties": { "$ref": "#/$defs/envValue" }
+    },
+    "workloadSpec": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "type": "string", "enum": ["service", "job"] },
+        "image": { "$ref": "#/$defs/imageReference" },
+        "build": { "$ref": "#/$defs/build" },
+        "command": { "type": "array", "minItems": 1, "maxItems": 64, "items": { "type": "string" } },
+        "environment": { "$ref": "#/$defs/environmentMap" },
+        "listeners": {
+          "type": "object",
+          "maxProperties": 16,
+          "propertyNames": { "$ref": "#/$defs/objectKey" },
+          "additionalProperties": { "$ref": "#/$defs/listener" }
+        },
+        "exports": {
+          "type": "object",
+          "maxProperties": 16,
+          "propertyNames": { "$ref": "#/$defs/objectKey" },
+          "additionalProperties": { "$ref": "#/$defs/export" }
+        },
+        "dependencies": {
+          "type": "object",
+          "maxProperties": 16,
+          "propertyNames": { "$ref": "#/$defs/objectKey" },
+          "additionalProperties": { "$ref": "#/$defs/dependency" }
+        },
+        "volumes": {
+          "type": "object",
+          "maxProperties": 16,
+          "propertyNames": { "$ref": "#/$defs/objectKey" },
+          "additionalProperties": { "$ref": "#/$defs/volume" }
+        },
+        "prerequisites": {
+          "type": "array",
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["job"],
+            "properties": { "job": { "$ref": "#/$defs/objectKey" } }
+          }
+        }
+      },
+      "oneOf": [
+        { "required": ["image"], "not": { "required": ["build"] } },
+        { "required": ["build"], "not": { "required": ["image"] } }
+      ]
+    },
+    "moduleInstanceSpec": {
+      "type": "object",
+      "required": ["definition"],
+      "properties": { "definition": { "$ref": "#/$defs/moduleName" }, "options": { "type": "object" } }
+    },
+    "clientSpec": {
+      "type": "object",
+      "required": ["dependencies"],
+      "properties": {
+        "dependencies": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 16,
+          "propertyNames": { "$ref": "#/$defs/objectKey" },
+          "additionalProperties": { "$ref": "#/$defs/dependency" }
+        }
+      }
+    },
+    "workloadDeclaration": {
+      "$ref": "#/$defs/workloadSpec",
+      "properties": { "metadata": { "$ref": "#/$defs/metadata" } },
+      "unevaluatedProperties": false
+    },
+    "moduleInstanceDeclaration": {
+      "$ref": "#/$defs/moduleInstanceSpec",
+      "properties": { "metadata": { "$ref": "#/$defs/metadata" } },
+      "unevaluatedProperties": false
+    },
+    "clientDeclaration": {
+      "$ref": "#/$defs/clientSpec",
+      "properties": { "metadata": { "$ref": "#/$defs/metadata" } },
+      "unevaluatedProperties": false
+    },
+    "application": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workloads"],
+      "properties": {
+        "workloads": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 256,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/objectKey" }
+        },
+        "default": { "type": "boolean" },
+        "metadata": { "$ref": "#/$defs/metadata" }
+      }
+    },
+    "exportRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["object", "export"],
+      "properties": { "object": { "$ref": "#/$defs/objectRef" }, "export": { "$ref": "#/$defs/objectKey" } }
+    },
+    "fileDelivery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "mode"],
+      "properties": {
+        "path": { "$ref": "#/$defs/containerPath" },
+        "mode": { "$ref": "#/$defs/fileMode" },
+        "owner": { "$ref": "#/$defs/owner" }
+      }
+    },
+    "delivery": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "environment": {
+          "type": "object",
+          "maxProperties": 32,
+          "propertyNames": { "$ref": "#/$defs/envKey" },
+          "additionalProperties": { "$ref": "#/$defs/objectKey" }
+        },
+        "files": {
+          "type": "object",
+          "maxProperties": 16,
+          "propertyNames": { "$ref": "#/$defs/objectKey" },
+          "additionalProperties": { "$ref": "#/$defs/fileDelivery" }
+        }
+      },
+      "minProperties": 1
+    },
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["consumer", "dependency", "source"],
+      "properties": {
+        "consumer": { "$ref": "#/$defs/objectRef" },
+        "dependency": { "$ref": "#/$defs/objectKey" },
+        "source": { "$ref": "#/$defs/exportRef" },
+        "parameters": { "type": "object" },
+        "delivery": { "$ref": "#/$defs/delivery" }
+      }
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sensitivity"],
+      "properties": {
+        "sensitivity": { "$ref": "#/$defs/sensitivity" },
+        "value": { "type": "string", "maxLength": 4096 }
+      }
+    },
+    "inputSources": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "value": { "type": "string", "maxLength": 4096 },
+        "local": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["file", "key"],
+          "properties": { "file": { "$ref": "#/$defs/relativePath" }, "key": { "$ref": "#/$defs/envKey" } }
+        },
+        "process": { "$ref": "#/$defs/envKey" }
+      },
+      "minProperties": 1
+    },
+    "composeRuntime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "context"],
+      "properties": {
+        "type": { "type": "string", "const": "compose" },
+        "context": { "$ref": "#/$defs/dockerContext" }
+      }
+    },
+    "exposure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source"],
+      "properties": {
+        "source": { "$ref": "#/$defs/exportRef" },
+        "port": { "type": "integer", "minimum": 1024, "maximum": 65535 }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runtime", "secrets"],
+      "properties": {
+        "runtime": { "$ref": "#/$defs/composeRuntime" },
+        "secrets": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["provider"],
+          "properties": { "provider": { "$ref": "#/$defs/providerId" } }
+        },
+        "exposures": { "type": "array", "maxItems": 64, "items": { "$ref": "#/$defs/exposure" } },
+        "inputs": {
+          "type": "object",
+          "propertyNames": { "$ref": "#/$defs/objectKey" },
+          "additionalProperties": { "$ref": "#/$defs/inputSources" }
+        },
+        "overrides": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "workloads": {
+              "type": "object",
+              "propertyNames": { "$ref": "#/$defs/objectKey" },
+              "additionalProperties": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["environment"],
+                "properties": { "environment": { "$ref": "#/$defs/environmentMap" } }
+              }
+            },
+            "modules": {
+              "type": "object",
+              "propertyNames": { "$ref": "#/$defs/objectKey" },
+              "additionalProperties": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["options"],
+                "properties": { "options": { "type": "object" } }
+              }
+            }
+          }
+        },
+        "metadata": { "$ref": "#/$defs/metadata" }
+      }
+    },
+    "definitionsSection": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/moduleName" },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path"],
+        "properties": { "path": { "$ref": "#/$defs/relativePath" } }
+      }
+    },
+    "inputsSection": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/objectKey" },
+      "additionalProperties": { "$ref": "#/$defs/input" }
+    },
+    "workloadsSection": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/objectKey" },
+      "additionalProperties": { "$ref": "#/$defs/workloadDeclaration" }
+    },
+    "modulesSection": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/objectKey" },
+      "additionalProperties": { "$ref": "#/$defs/moduleInstanceDeclaration" }
+    },
+    "clientsSection": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/objectKey" },
+      "additionalProperties": { "$ref": "#/$defs/clientDeclaration" }
+    },
+    "applicationsSection": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/objectKey" },
+      "additionalProperties": { "$ref": "#/$defs/application" }
+    },
+    "bindingsSection": { "type": "array", "maxItems": 1024, "items": { "$ref": "#/$defs/binding" } },
+    "environmentsSection": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/scopeName" },
+      "additionalProperties": { "$ref": "#/$defs/environment" }
+    },
+    "sections": {
+      "type": "object",
+      "properties": {
+        "definitions": { "$ref": "#/$defs/definitionsSection" },
+        "inputs": { "$ref": "#/$defs/inputsSection" },
+        "workloads": { "$ref": "#/$defs/workloadsSection" },
+        "modules": { "$ref": "#/$defs/modulesSection" },
+        "clients": { "$ref": "#/$defs/clientsSection" },
+        "applications": { "$ref": "#/$defs/applicationsSection" },
+        "bindings": { "$ref": "#/$defs/bindingsSection" },
+        "environments": { "$ref": "#/$defs/environmentsSection" }
+      }
+    },
+    "origin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["origin"],
+      "properties": {
+        "origin": { "type": "string", "enum": ["yaml", "sdk"] },
+        "file": { "$ref": "#/$defs/relativePath" },
+        "line": { "type": "integer", "minimum": 1 },
+        "column": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "provenanceEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["declared"],
+      "properties": {
+        "declared": { "$ref": "#/$defs/origin" },
+        "patched": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["origin", "fields"],
+            "properties": {
+              "origin": { "type": "string", "const": "sdk" },
+              "fields": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": { "$ref": "#/$defs/jsonPointer" }
+              },
+              "file": { "$ref": "#/$defs/relativePath" },
+              "line": { "type": "integer", "minimum": 1 },
+              "column": { "type": "integer", "minimum": 1 }
+            }
+          }
+        }
+      }
     }
   }
 }

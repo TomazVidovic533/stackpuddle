@@ -1,0 +1,18 @@
+apiVersion: stackpuddle/v1
+kind: Fragment
+spec:
+  workloads:
+    api:
+      type: service
+      image: ghcr.io/example/api:1.4.2
+      listeners:
+        http:
+          port: 8080
+          protocol: http
+  environments:
+    local:
+      runtime:
+        type: compose
+        context: desktop-linux
+      secrets:
+        provider: local

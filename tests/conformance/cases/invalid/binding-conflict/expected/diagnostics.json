@@ -1,0 +1,9 @@
+[
+  {
+    "code": "binding.conflict",
+    "column": 7,
+    "file": "stackpuddle.yaml",
+    "line": 33,
+    "pointer": "/spec/bindings/1"
+  }
+]

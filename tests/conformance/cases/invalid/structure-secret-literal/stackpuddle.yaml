@@ -1,0 +1,9 @@
+apiVersion: stackpuddle/v1
+kind: Project
+metadata:
+  name: shop
+spec:
+  inputs:
+    db-password:
+      sensitivity: secret
+      value: not-a-real-password

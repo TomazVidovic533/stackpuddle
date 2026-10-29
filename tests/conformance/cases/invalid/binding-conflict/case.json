@@ -1,0 +1,5 @@
+{
+  "description": "Two bindings for one Dependency with different sources.",
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

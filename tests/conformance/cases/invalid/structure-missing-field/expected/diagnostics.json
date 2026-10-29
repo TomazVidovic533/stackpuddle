@@ -1,0 +1,9 @@
+[
+  {
+    "code": "structure.missing_field",
+    "column": 5,
+    "file": "stackpuddle.yaml",
+    "line": 7,
+    "pointer": "/spec/workloads/api/type"
+  }
+]

@@ -1,0 +1,8 @@
+{
+  "description": "A binding names an export its source does not declare.",
+  "parity": {
+    "sdk": "The same binding written with an untyped export name the SDK cannot check; the Go model reports it with diagnostics compared by code, file and pointer."
+  },
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

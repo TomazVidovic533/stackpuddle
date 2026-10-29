@@ -1,0 +1,9 @@
+[
+  {
+    "code": "compatibility.bundle_version_mismatch",
+    "column": 3,
+    "file": "stackpuddle.lock.yaml",
+    "line": 4,
+    "pointer": "/bundle/version"
+  }
+]

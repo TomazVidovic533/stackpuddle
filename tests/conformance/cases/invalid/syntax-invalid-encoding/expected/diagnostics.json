@@ -1,0 +1,9 @@
+[
+  {
+    "code": "syntax.invalid_encoding",
+    "column": 19,
+    "file": "stackpuddle.yaml",
+    "line": 5,
+    "pointer": ""
+  }
+]

@@ -1,0 +1,9 @@
+[
+  {
+    "code": "syntax.merge_key",
+    "column": 7,
+    "file": "stackpuddle.yaml",
+    "line": 11,
+    "pointer": "/spec/workloads/worker/<<"
+  }
+]

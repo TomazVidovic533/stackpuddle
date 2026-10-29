@@ -1,0 +1,9 @@
+[
+  {
+    "code": "reference.unknown_export",
+    "column": 9,
+    "file": "stackpuddle.yaml",
+    "line": 29,
+    "pointer": "/spec/bindings/0/source/export"
+  }
+]

@@ -1,0 +1,8 @@
+apiVersion: stackpuddle/v1
+kind: Project
+metadata:
+  name: shop
+spec:
+  definitions:
+    host-reader:
+      path: definitions/host-reader

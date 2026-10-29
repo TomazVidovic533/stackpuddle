@@ -1,0 +1,123 @@
+{
+  "apiVersion": "stackpuddle/v1",
+  "kind": "Model",
+  "metadata": {
+    "description": "Workloads that build from source, keep data and wait for jobs.",
+    "name": "shop"
+  },
+  "provenance": {
+    "env/local": {
+      "declared": {
+        "column": 5,
+        "file": "stackpuddle.yaml",
+        "line": 36,
+        "origin": "yaml"
+      }
+    },
+    "workload/api": {
+      "declared": {
+        "column": 5,
+        "file": "stackpuddle.yaml",
+        "line": 8,
+        "origin": "yaml"
+      }
+    },
+    "workload/migrate": {
+      "declared": {
+        "column": 5,
+        "file": "stackpuddle.yaml",
+        "line": 25,
+        "origin": "yaml"
+      }
+    },
+    "workload/seed": {
+      "declared": {
+        "column": 5,
+        "file": "stackpuddle.yaml",
+        "line": 30,
+        "origin": "yaml"
+      }
+    }
+  },
+  "spec": {
+    "environments": {
+      "local": {
+        "runtime": {
+          "context": "default",
+          "type": "compose"
+        },
+        "secrets": {
+          "provider": "local"
+        }
+      }
+    },
+    "objects": [
+      {
+        "apiVersion": "stackpuddle/v1",
+        "key": "api",
+        "kind": "Workload",
+        "metadata": {
+          "description": "Public API."
+        },
+        "spec": {
+          "build": {
+            "context": "services/api",
+            "dockerfile": "Dockerfile.prod",
+            "target": "runtime"
+          },
+          "command": [
+            "./api",
+            "--listen",
+            "0.0.0.0:8080"
+          ],
+          "environment": {
+            "LOG_LEVEL": "info"
+          },
+          "prerequisites": [
+            {
+              "job": "migrate"
+            },
+            {
+              "job": "seed"
+            }
+          ],
+          "type": "service",
+          "volumes": {
+            "uploads": {
+              "path": "/var/lib/api/uploads"
+            }
+          }
+        }
+      },
+      {
+        "apiVersion": "stackpuddle/v1",
+        "key": "migrate",
+        "kind": "Workload",
+        "spec": {
+          "build": {
+            "context": "services/api"
+          },
+          "command": [
+            "./api",
+            "migrate"
+          ],
+          "type": "job"
+        }
+      },
+      {
+        "apiVersion": "stackpuddle/v1",
+        "key": "seed",
+        "kind": "Workload",
+        "spec": {
+          "image": "ghcr.io/example/seed:2.0.0@sha256:0f1e2d3c4b5a69788796a5b4c3d2e1f00f1e2d3c4b5a69788796a5b4c3d2e1f0",
+          "prerequisites": [
+            {
+              "job": "migrate"
+            }
+          ],
+          "type": "job"
+        }
+      }
+    ]
+  }
+}

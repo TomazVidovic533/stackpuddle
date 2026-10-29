@@ -1,0 +1,95 @@
+{
+  "apiVersion": "stackpuddle/v1",
+  "kind": "Model",
+  "metadata": {
+    "name": "catalog"
+  },
+  "provenance": {
+    "env/local": {
+      "declared": {
+        "column": 5,
+        "file": "stackpuddle.yaml",
+        "line": 34,
+        "origin": "yaml"
+      }
+    },
+    "module/primary": {
+      "declared": {
+        "column": 5,
+        "file": "stackpuddle.yaml",
+        "line": 9,
+        "origin": "yaml"
+      }
+    }
+  },
+  "spec": {
+    "environments": {
+      "local": {
+        "runtime": {
+          "context": "desktop-linux",
+          "type": "compose"
+        },
+        "secrets": {
+          "provider": "local"
+        }
+      }
+    },
+    "lock": "stackpuddle.lock.yaml",
+    "manifest": "stackpuddle.manifest.yaml",
+    "objects": [
+      {
+        "apiVersion": "stackpuddle/v1",
+        "key": "primary",
+        "kind": "ModuleInstance",
+        "spec": {
+          "definition": "postgres",
+          "options": {
+            "databases": {
+              "catalog": {
+                "connectRoles": [
+                  "catalog_writer"
+                ],
+                "owner": "catalog_migrator",
+                "schemas": {
+                  "public": {
+                    "grants": {
+                      "catalog_writer": {
+                        "sequences": [
+                          "USAGE"
+                        ],
+                        "tables": [
+                          "SELECT",
+                          "INSERT",
+                          "UPDATE",
+                          "DELETE"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "roles": {
+              "catalog_writer": {
+                "login": false
+              }
+            },
+            "users": {
+              "catalog_app": {
+                "memberOf": [
+                  "catalog_writer"
+                ],
+                "passwordSecretRef": "catalog-app-password",
+                "purpose": "runtime"
+              },
+              "catalog_migrator": {
+                "passwordSecretRef": "catalog-migration-password",
+                "purpose": "migrations"
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}

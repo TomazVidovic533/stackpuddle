@@ -1,0 +1,9 @@
+[
+  {
+    "code": "structure.invalid_value",
+    "column": 11,
+    "file": "stackpuddle.yaml",
+    "line": 12,
+    "pointer": "/spec/workloads/api/listeners/http/port"
+  }
+]

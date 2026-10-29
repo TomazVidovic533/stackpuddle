@@ -1,0 +1,5 @@
+{
+  "description": "The Manifest lists postgres but no packaged definition is supplied: the project loads, records postgres as unresolved and skips every check that needs its definition.",
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

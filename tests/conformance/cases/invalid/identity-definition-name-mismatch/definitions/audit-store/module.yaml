@@ -1,0 +1,4 @@
+apiVersion: stackpuddle/v1
+kind: Module
+name: audit-log
+version: 0.1.0

@@ -1,0 +1,9 @@
+[
+  {
+    "code": "compatibility.unsupported_api_version",
+    "column": 1,
+    "file": "stackpuddle.yaml",
+    "line": 1,
+    "pointer": "/apiVersion"
+  }
+]

@@ -1,0 +1,65 @@
+{
+  "apiVersion": "stackpuddle/v1",
+  "kind": "Model",
+  "metadata": {
+    "description": "Written by an SDK: \"quoted\", naïve & <raw> text.",
+    "name": "shop"
+  },
+  "provenance": {
+    "env/local": {
+      "declared": {
+        "column": 3,
+        "file": "src/stack.ts",
+        "line": 21,
+        "origin": "sdk"
+      }
+    },
+    "workload/api": {
+      "declared": {
+        "column": 3,
+        "file": "src/stack.ts",
+        "line": 8,
+        "origin": "sdk"
+      },
+      "patched": [
+        {
+          "column": 1,
+          "fields": [
+            "/spec/command"
+          ],
+          "file": "src/overrides.ts",
+          "line": 4,
+          "origin": "sdk"
+        }
+      ]
+    }
+  },
+  "spec": {
+    "environments": {
+      "local": {
+        "runtime": {
+          "context": "desktop-linux",
+          "type": "compose"
+        },
+        "secrets": {
+          "provider": "local"
+        }
+      }
+    },
+    "objects": [
+      {
+        "apiVersion": "stackpuddle/v1",
+        "key": "api",
+        "kind": "Workload",
+        "spec": {
+          "command": [
+            "./api",
+            "--port=8080"
+          ],
+          "image": "ghcr.io/example/api:1.4.2",
+          "type": "service"
+        }
+      }
+    ]
+  }
+}

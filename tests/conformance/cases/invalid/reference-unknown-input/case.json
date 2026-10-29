@@ -1,0 +1,5 @@
+{
+  "description": "An environment variable taken from an input nobody declares.",
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

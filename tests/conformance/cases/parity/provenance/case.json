@@ -1,0 +1,8 @@
+{
+  "description": "Declarations spread over a root and one imported Fragment: each provenance entry names the file, line and column of its declaration key.",
+  "parity": {
+    "sdk": "An SDK project that imports services/workloads.yaml and declares the application and environment itself; provenance.*.declared of the imported workloads equals expected/model.json, and the SDK's own declarations carry origin sdk."
+  },
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

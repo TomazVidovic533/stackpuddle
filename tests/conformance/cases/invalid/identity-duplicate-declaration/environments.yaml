@@ -1,0 +1,10 @@
+apiVersion: stackpuddle/v1
+kind: Fragment
+spec:
+  environments:
+    local:
+      runtime:
+        type: compose
+        context: desktop-linux
+      secrets:
+        provider: local

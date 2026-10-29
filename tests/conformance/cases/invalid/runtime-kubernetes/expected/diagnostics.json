@@ -1,0 +1,9 @@
+[
+  {
+    "code": "structure.invalid_value",
+    "column": 9,
+    "file": "stackpuddle.yaml",
+    "line": 13,
+    "pointer": "/spec/environments/local/runtime/type"
+  }
+]

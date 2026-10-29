@@ -1,0 +1,5 @@
+{
+  "description": "Two applications that share a workload; the shared workload is still one declaration, and a false default is the same intent as none.",
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

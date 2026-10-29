@@ -1,0 +1,6 @@
+{
+  "bundle": "bundle.yaml",
+  "description": "A Lock whose bundle version and every module version are in the bundle's tested set.",
+  "root": "stackpuddle.lock.yaml",
+  "subject": "bundle-lock"
+}

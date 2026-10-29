@@ -1,0 +1,15 @@
+apiVersion: stackpuddle/v1
+kind: Module
+name: queue-cache
+version: 1.2.0
+requires:
+  capabilities: [runtime.compose/1]
+workloads:
+  broker:
+    type: service
+    image: ghcr.io/example/queue-cache:1.2.0
+    environment:
+      CACHE_MODE: write-through
+    dependencies:
+      api:
+        capability: http.api/1

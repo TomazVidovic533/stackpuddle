@@ -1,0 +1,9 @@
+[
+  {
+    "code": "binding.capability_mismatch",
+    "column": 7,
+    "file": "stackpuddle.yaml",
+    "line": 27,
+    "pointer": "/spec/bindings/0/source"
+  }
+]

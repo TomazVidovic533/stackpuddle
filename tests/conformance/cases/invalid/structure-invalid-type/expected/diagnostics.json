@@ -1,0 +1,9 @@
+[
+  {
+    "code": "structure.invalid_type",
+    "column": 7,
+    "file": "stackpuddle.yaml",
+    "line": 10,
+    "pointer": "/spec/workloads/api/command"
+  }
+]

@@ -1,0 +1,10 @@
+apiVersion: stackpuddle/v1
+kind: Project
+metadata:
+  name: shop
+  description: café
+spec:
+  workloads:
+    api:
+      type: service
+      image: ghcr.io/example/api:1.4.2

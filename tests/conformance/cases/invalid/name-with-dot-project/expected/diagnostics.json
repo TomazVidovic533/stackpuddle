@@ -1,0 +1,9 @@
+[
+  {
+    "code": "structure.invalid_value",
+    "column": 3,
+    "file": "stackpuddle.yaml",
+    "line": 4,
+    "pointer": "/metadata/name"
+  }
+]

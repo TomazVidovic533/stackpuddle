@@ -1,0 +1,15 @@
+{
+  "apiVersion": "stackpuddle/v1",
+  "cli": {
+    "go": "go1.27.0",
+    "platform": "linux/amd64",
+    "version": "v0.0.0-20261029010000-014df27a6e94"
+  },
+  "kind": "VersionInfo",
+  "model": {
+    "apiVersions": [
+      "stackpuddle/v1"
+    ],
+    "version": "v0.0.0-20261029010000-014df27a6e94"
+  }
+}

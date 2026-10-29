@@ -1,0 +1,101 @@
+{
+  "apiVersion": "stackpuddle/v1",
+  "kind": "Model",
+  "metadata": {
+    "name": "shop"
+  },
+  "provenance": {
+    "binding/workload/web/api": {
+      "declared": {
+        "column": 7,
+        "file": "stackpuddle.yaml",
+        "line": 25,
+        "origin": "yaml"
+      }
+    },
+    "env/local": {
+      "declared": {
+        "column": 5,
+        "file": "stackpuddle.yaml",
+        "line": 31,
+        "origin": "yaml"
+      }
+    },
+    "workload/api": {
+      "declared": {
+        "column": 5,
+        "file": "stackpuddle.yaml",
+        "line": 7,
+        "origin": "yaml"
+      }
+    },
+    "workload/web": {
+      "declared": {
+        "column": 5,
+        "file": "stackpuddle.yaml",
+        "line": 18,
+        "origin": "yaml"
+      }
+    }
+  },
+  "spec": {
+    "bindings": [
+      {
+        "consumer": "workload/web",
+        "dependency": "api",
+        "source": {
+          "export": "http",
+          "object": "workload/api"
+        }
+      }
+    ],
+    "environments": {
+      "local": {
+        "runtime": {
+          "context": "desktop-linux",
+          "type": "compose"
+        },
+        "secrets": {
+          "provider": "local"
+        }
+      }
+    },
+    "objects": [
+      {
+        "apiVersion": "stackpuddle/v1",
+        "key": "api",
+        "kind": "Workload",
+        "spec": {
+          "exports": {
+            "http": {
+              "capability": "http.api/1",
+              "listener": "http"
+            }
+          },
+          "image": "ghcr.io/example/api:1.4.2",
+          "listeners": {
+            "http": {
+              "port": 8080,
+              "protocol": "http"
+            }
+          },
+          "type": "service"
+        }
+      },
+      {
+        "apiVersion": "stackpuddle/v1",
+        "key": "web",
+        "kind": "Workload",
+        "spec": {
+          "dependencies": {
+            "api": {
+              "capability": "http.api/1"
+            }
+          },
+          "image": "ghcr.io/example/web:3.0.0",
+          "type": "service"
+        }
+      }
+    ]
+  }
+}

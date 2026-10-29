@@ -1,0 +1,38 @@
+apiVersion: stackpuddle/v1
+kind: Project
+metadata:
+  name: shop
+spec:
+  definitions:
+    audit-store:
+      path: definitions/audit-store
+  modules:
+    audit:
+      definition: audit-store
+      options:
+        retentionDays: 30
+      metadata:
+        description: Keeps the audit trail.
+  workloads:
+    api:
+      type: service
+      image: ghcr.io/example/api:1.4.2
+      dependencies:
+        audit:
+          capability: audit.ingest/1
+  bindings:
+    - consumer: workload/api
+      dependency: audit
+      source:
+        object: module/audit
+        export: ingest
+      parameters:
+        stream: orders
+        batchSize: 50
+  environments:
+    local:
+      runtime:
+        type: compose
+        context: desktop-linux
+      secrets:
+        provider: local

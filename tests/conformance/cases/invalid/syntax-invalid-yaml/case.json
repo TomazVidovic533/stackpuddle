@@ -1,0 +1,5 @@
+{
+  "description": "A mapping value where YAML allows none.",
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

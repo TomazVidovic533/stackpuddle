@@ -1,0 +1,9 @@
+[
+  {
+    "code": "syntax.non_json_number",
+    "column": 17,
+    "file": "stackpuddle.yaml",
+    "line": 12,
+    "pointer": "/spec/workloads/api/listeners/http/port"
+  }
+]

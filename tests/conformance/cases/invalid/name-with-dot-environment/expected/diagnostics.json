@@ -1,0 +1,9 @@
+[
+  {
+    "code": "structure.invalid_value",
+    "column": 5,
+    "file": "stackpuddle.yaml",
+    "line": 11,
+    "pointer": "/spec/environments/local.compose"
+  }
+]

@@ -1,0 +1,10 @@
+{
+  "description": "Public and secret inputs with per-environment sources (literal, ignored local file key, mapped process variable) and per-environment overrides of a workload's environment and a module instance's options.",
+  "packaged": [
+    {
+      "repository": "postgres"
+    }
+  ],
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

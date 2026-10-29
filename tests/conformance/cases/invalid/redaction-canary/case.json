@@ -1,0 +1,5 @@
+{
+  "description": "An invalid workload environment value holding a canary string that no diagnostic may repeat.",
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

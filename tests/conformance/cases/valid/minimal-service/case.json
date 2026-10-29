@@ -1,0 +1,5 @@
+{
+  "description": "The smallest runnable project: one service from an image and one Compose environment.",
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

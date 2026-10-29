@@ -1,0 +1,8 @@
+apiVersion: stackpuddle/v1
+kind: Project
+metadata:
+  name: shop
+spec:
+  modules:
+    cache:
+      definition: redis

@@ -1,0 +1,117 @@
+{
+  "apiVersion": "stackpuddle/v1",
+  "kind": "Model",
+  "metadata": {
+    "name": "shop"
+  },
+  "provenance": {
+    "env/local": {
+      "declared": {
+        "column": 5,
+        "file": "stackpuddle.yaml",
+        "line": 34,
+        "origin": "yaml"
+      }
+    },
+    "module/primary": {
+      "declared": {
+        "column": 5,
+        "file": "stackpuddle.yaml",
+        "line": 17,
+        "origin": "yaml"
+      }
+    },
+    "workload/api": {
+      "declared": {
+        "column": 5,
+        "file": "stackpuddle.yaml",
+        "line": 7,
+        "origin": "yaml"
+      }
+    }
+  },
+  "spec": {
+    "environments": {
+      "local": {
+        "runtime": {
+          "context": "desktop-linux",
+          "type": "compose"
+        },
+        "secrets": {
+          "provider": "local"
+        }
+      }
+    },
+    "objects": [
+      {
+        "apiVersion": "stackpuddle/v1",
+        "key": "primary",
+        "kind": "ModuleInstance",
+        "spec": {
+          "definition": "postgres",
+          "options": {
+            "databases": {
+              "shop": {
+                "connectRoles": [
+                  "writer"
+                ],
+                "owner": "migrator",
+                "schemas": {
+                  "public": {
+                    "grants": {
+                      "writer": {
+                        "sequences": [
+                          "USAGE"
+                        ],
+                        "tables": [
+                          "SELECT",
+                          "INSERT"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "roles": {
+              "writer": {
+                "login": false
+              }
+            },
+            "users": {
+              "app": {
+                "memberOf": [
+                  "writer"
+                ],
+                "passwordSecretRef": "app-password",
+                "purpose": "runtime"
+              },
+              "migrator": {
+                "passwordSecretRef": "migrator-password",
+                "purpose": "migrations"
+              }
+            }
+          }
+        }
+      },
+      {
+        "apiVersion": "stackpuddle/v1",
+        "key": "api",
+        "kind": "Workload",
+        "spec": {
+          "environment": {
+            "LOG_LEVEL": "info"
+          },
+          "image": "ghcr.io/example/api:1.4.2",
+          "listeners": {
+            "http": {
+              "port": 8080,
+              "protocol": "http"
+            }
+          },
+          "type": "service"
+        }
+      }
+    ]
+  }
+}

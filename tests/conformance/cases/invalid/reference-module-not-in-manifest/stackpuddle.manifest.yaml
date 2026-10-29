@@ -1,0 +1,5 @@
+apiVersion: stackpuddle/v1
+kind: Manifest
+bundleVersion: 0.1.0-alpha.1
+modules:
+  - observability

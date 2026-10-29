@@ -1,0 +1,9 @@
+[
+  {
+    "code": "reference.unknown_dependency",
+    "column": 7,
+    "file": "stackpuddle.yaml",
+    "line": 23,
+    "pointer": "/spec/bindings/0/dependency"
+  }
+]

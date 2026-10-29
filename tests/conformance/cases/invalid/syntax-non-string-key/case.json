@@ -1,0 +1,5 @@
+{
+  "description": "A workload keyed by an integer.",
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

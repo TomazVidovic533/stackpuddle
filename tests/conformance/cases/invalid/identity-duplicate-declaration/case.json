@@ -1,0 +1,5 @@
+{
+  "description": "The environment is declared by the root and again by an imported Fragment.",
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

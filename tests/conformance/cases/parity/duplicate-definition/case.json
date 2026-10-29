@@ -1,0 +1,8 @@
+{
+  "description": "workload/api is declared by the root and again by an imported Fragment; the later declaration is the duplicate.",
+  "parity": {
+    "sdk": "An SDK project that declares workload/api and imports a YAML Fragment that declares it too; diagnostics compare by code, file and pointer."
+  },
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

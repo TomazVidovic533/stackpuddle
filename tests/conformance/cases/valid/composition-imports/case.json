@@ -1,0 +1,6 @@
+{
+  "description": "The project of composition-single-file split into a root that imports two Fragment files; only provenance differs.",
+  "equivalentTo": "valid/composition-single-file",
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

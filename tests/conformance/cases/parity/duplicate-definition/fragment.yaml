@@ -1,0 +1,7 @@
+apiVersion: stackpuddle/v1
+kind: Fragment
+spec:
+  workloads:
+    api:
+      type: service
+      image: ghcr.io/example/api:2.0.0

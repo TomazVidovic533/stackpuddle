@@ -1,0 +1,9 @@
+[
+  {
+    "code": "syntax.null_value",
+    "column": 14,
+    "file": "stackpuddle.yaml",
+    "line": 9,
+    "pointer": "/spec/workloads/api/image"
+  }
+]

@@ -1,0 +1,17 @@
+apiVersion: stackpuddle/v1
+kind: Project
+metadata:
+  name: shop
+spec:
+  imports:
+    - services/workloads.yaml
+  applications:
+    backend:
+      workloads: [api, reindex]
+  environments:
+    local:
+      runtime:
+        type: compose
+        context: desktop-linux
+      secrets:
+        provider: local

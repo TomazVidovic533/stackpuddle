@@ -1,0 +1,10 @@
+{
+  "description": "PostgreSQL options with a user purpose the module's option schema does not allow.",
+  "packaged": [
+    {
+      "repository": "postgres"
+    }
+  ],
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

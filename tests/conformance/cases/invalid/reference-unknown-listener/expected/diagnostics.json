@@ -1,0 +1,9 @@
+[
+  {
+    "code": "reference.unknown_listener",
+    "column": 11,
+    "file": "stackpuddle.yaml",
+    "line": 17,
+    "pointer": "/spec/workloads/api/exports/http/listener"
+  }
+]

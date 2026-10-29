@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:stackpuddle:schema:v1:fragment",
+  "description": "Declarations that a Project imports. A Fragment imports nothing itself.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "spec"],
+  "properties": {
+    "apiVersion": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/apiVersion" },
+    "kind": { "type": "string", "const": "Fragment" },
+    "spec": {
+      "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/sections",
+      "unevaluatedProperties": false
+    }
+  }
+}

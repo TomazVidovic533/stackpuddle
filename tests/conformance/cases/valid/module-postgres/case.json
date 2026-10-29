@@ -1,0 +1,9 @@
+{
+  "description": "The repository's PostgreSQL module loads through the generic Module Definition contract with no diagnostics.",
+  "packaged": [
+    {
+      "repository": "postgres"
+    }
+  ],
+  "subject": "module"
+}

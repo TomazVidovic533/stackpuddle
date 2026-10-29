@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:stackpuddle:schema:v1:bindings",
+  "description": "Resolved bindings of one project environment: the endpoint each consumer reaches from its context.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "metadata", "bindings"],
+  "properties": {
+    "apiVersion": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/apiVersion" },
+    "kind": { "type": "string", "const": "Bindings" },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["project", "environment"],
+      "properties": {
+        "project": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/scopeName" },
+        "environment": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/scopeName" }
+      }
+    },
+    "bindings": {
+      "type": "array",
+      "maxItems": 1024,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["consumer", "dependency", "source", "capability", "context", "endpoint"],
+        "properties": {
+          "consumer": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/objectRef" },
+          "dependency": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/objectKey" },
+          "source": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/exportRef" },
+          "capability": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/capability" },
+          "context": { "type": "string", "enum": ["container", "host"] },
+          "endpoint": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["host", "port"],
+            "properties": {
+              "host": { "type": "string", "minLength": 1, "maxLength": 253 },
+              "port": { "type": "integer", "minimum": 1, "maximum": 65535 }
+            }
+          }
+        }
+      }
+    }
+  }
+}

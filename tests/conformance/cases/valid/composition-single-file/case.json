@@ -1,0 +1,6 @@
+{
+  "description": "A project declared in one file; composition-imports declares the same intent across a root and two Fragment files.",
+  "equivalentTo": "valid/composition-imports",
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

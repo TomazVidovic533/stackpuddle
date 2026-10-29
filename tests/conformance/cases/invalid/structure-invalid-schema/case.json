@@ -1,0 +1,5 @@
+{
+  "description": "A local definition whose option schema refers to a local file; loading is refused, so the schema does not compile.",
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

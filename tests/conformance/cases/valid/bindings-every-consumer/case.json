@@ -1,0 +1,31 @@
+{
+  "addresses": [
+    {
+      "context": "container",
+      "host": "api",
+      "port": 8080,
+      "source": {
+        "export": "http",
+        "object": "workload/api"
+      }
+    },
+    {
+      "context": "host",
+      "host": "127.0.0.1",
+      "port": 49153,
+      "source": {
+        "export": "http",
+        "object": "workload/api"
+      }
+    }
+  ],
+  "description": "One Export consumed by a service, a job, a packaged module instance, a project-local module instance and a host client; the client reaches it through an exposure at a host address, the others at a container address.",
+  "environment": "local",
+  "packaged": [
+    {
+      "case": "packaged/queue-cache"
+    }
+  ],
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

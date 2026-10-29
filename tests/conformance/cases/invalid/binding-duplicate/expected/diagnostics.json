@@ -1,0 +1,9 @@
+[
+  {
+    "code": "binding.duplicate",
+    "column": 7,
+    "file": "stackpuddle.yaml",
+    "line": 30,
+    "pointer": "/spec/bindings/1"
+  }
+]

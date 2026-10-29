@@ -1,0 +1,6 @@
+{
+  "bundle": "bundle.yaml",
+  "description": "The Lock pins another bundle version than the bundle's.",
+  "root": "stackpuddle.lock.yaml",
+  "subject": "bundle-lock"
+}

@@ -1,0 +1,129 @@
+{
+  "apiVersion": "stackpuddle/v1",
+  "kind": "Model",
+  "metadata": {
+    "name": "shop"
+  },
+  "provenance": {
+    "app/storefront": {
+      "declared": {
+        "column": 5,
+        "file": "stackpuddle.yaml",
+        "line": 32,
+        "origin": "yaml"
+      }
+    },
+    "binding/workload/web/api": {
+      "declared": {
+        "column": 7,
+        "file": "stackpuddle.yaml",
+        "line": 36,
+        "origin": "yaml"
+      }
+    },
+    "env/local": {
+      "declared": {
+        "column": 5,
+        "file": "stackpuddle.yaml",
+        "line": 42,
+        "origin": "yaml"
+      }
+    },
+    "workload/api": {
+      "declared": {
+        "column": 5,
+        "file": "stackpuddle.yaml",
+        "line": 11,
+        "origin": "yaml"
+      }
+    },
+    "workload/web": {
+      "declared": {
+        "column": 5,
+        "file": "stackpuddle.yaml",
+        "line": 25,
+        "origin": "yaml"
+      }
+    }
+  },
+  "spec": {
+    "applications": {
+      "storefront": {
+        "default": true,
+        "workloads": [
+          "api",
+          "web"
+        ]
+      }
+    },
+    "bindings": [
+      {
+        "consumer": "workload/web",
+        "dependency": "api",
+        "source": {
+          "export": "http",
+          "object": "workload/api"
+        }
+      }
+    ],
+    "environments": {
+      "local": {
+        "runtime": {
+          "context": "desktop-linux",
+          "type": "compose"
+        },
+        "secrets": {
+          "provider": "local"
+        }
+      }
+    },
+    "inputs": {
+      "api-log-level": {
+        "sensitivity": "public",
+        "value": "info"
+      }
+    },
+    "objects": [
+      {
+        "apiVersion": "stackpuddle/v1",
+        "key": "api",
+        "kind": "Workload",
+        "spec": {
+          "environment": {
+            "LOG_LEVEL": {
+              "input": "api-log-level"
+            }
+          },
+          "exports": {
+            "http": {
+              "capability": "http.api/1",
+              "listener": "http"
+            }
+          },
+          "image": "ghcr.io/example/api:1.4.2",
+          "listeners": {
+            "http": {
+              "port": 8080,
+              "protocol": "http"
+            }
+          },
+          "type": "service"
+        }
+      },
+      {
+        "apiVersion": "stackpuddle/v1",
+        "key": "web",
+        "kind": "Workload",
+        "spec": {
+          "dependencies": {
+            "api": {
+              "capability": "http.api/1"
+            }
+          },
+          "image": "ghcr.io/example/web:3.0.0",
+          "type": "service"
+        }
+      }
+    ]
+  }
+}

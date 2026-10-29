@@ -1,0 +1,5 @@
+{
+  "description": "VersionInfo of a build that links an engine: its capabilities and the state and store versions it reads and writes.",
+  "root": "version-info.json",
+  "subject": "version-info"
+}

@@ -1,0 +1,5 @@
+{
+  "description": "A secret input with its value written into the project.",
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

@@ -1,0 +1,98 @@
+apiVersion: stackpuddle/v1
+kind: Project
+metadata:
+  name: shop
+spec:
+  definitions:
+    audit-store:
+      path: definitions/audit-store
+  workloads:
+    api:
+      type: service
+      image: ghcr.io/example/api:1.4.2
+      listeners:
+        http:
+          port: 8080
+          protocol: http
+      exports:
+        http:
+          capability: http.api/1
+          listener: http
+          values:
+            token:
+              sensitivity: secret
+    web:
+      type: service
+      image: ghcr.io/example/web:3.0.0
+      dependencies:
+        api:
+          capability: http.api/1
+    smoke:
+      type: job
+      image: ghcr.io/example/smoke:1.0.0
+      dependencies:
+        api:
+          capability: http.api/1
+  modules:
+    queue:
+      definition: queue-cache
+    audit:
+      definition: audit-store
+  clients:
+    cli:
+      dependencies:
+        api:
+          capability: http.api/1
+      metadata:
+        description: The developer's terminal.
+  bindings:
+    - consumer: workload/web
+      dependency: api
+      source:
+        object: workload/api
+        export: http
+      delivery:
+        environment:
+          API_HOST: host
+          API_PORT: port
+    - consumer: workload/smoke
+      dependency: api
+      source:
+        object: workload/api
+        export: http
+      delivery:
+        files:
+          token:
+            path: /run/secrets/api-token
+            mode: "0440"
+            owner: "1000:1000"
+    - consumer: module/queue
+      dependency: api
+      source:
+        object: workload/api
+        export: http
+      delivery:
+        environment:
+          UPSTREAM_HOST: host
+    - consumer: module/audit
+      dependency: api
+      source:
+        object: workload/api
+        export: http
+    - consumer: client/cli
+      dependency: api
+      source:
+        object: workload/api
+        export: http
+  environments:
+    local:
+      runtime:
+        type: compose
+        context: desktop-linux
+      secrets:
+        provider: local
+      exposures:
+        - source:
+            object: workload/api
+            export: http
+          port: 18080

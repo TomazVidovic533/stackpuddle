@@ -1,0 +1,25 @@
+apiVersion: stackpuddle/v1
+kind: Project
+metadata:
+  name: shop
+spec:
+  workloads:
+    web: {type: service, image: ghcr.io/example/web:3.0.0}
+    api: {type: service, image: ghcr.io/example/api:1.4.2}
+    backoffice: {type: service, image: ghcr.io/example/backoffice:0.9.0}
+  applications:
+    storefront:
+      workloads: [web, api]
+      default: true
+      metadata:
+        description: What customers use.
+    admin:
+      workloads: [backoffice, api]
+      default: false
+  environments:
+    local:
+      runtime:
+        type: compose
+        context: desktop-linux
+      secrets:
+        provider: local

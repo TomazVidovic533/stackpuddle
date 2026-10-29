@@ -1,0 +1,5 @@
+{
+  "description": "A custom tag on an image reference.",
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

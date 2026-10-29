@@ -1,0 +1,5 @@
+{
+  "description": "Versions in ascending SemVer 2.0.0 precedence: numeric prerelease identifiers compare as numbers, and the specification's section 11 example chain holds.",
+  "root": "versions.json",
+  "subject": "versions"
+}

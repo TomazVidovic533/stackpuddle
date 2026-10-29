@@ -1,0 +1,5 @@
+{
+  "description": "A merge key inside a workload.",
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

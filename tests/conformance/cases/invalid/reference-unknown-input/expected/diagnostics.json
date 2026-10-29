@@ -1,0 +1,9 @@
+[
+  {
+    "code": "reference.unknown_input",
+    "column": 9,
+    "file": "stackpuddle.yaml",
+    "line": 11,
+    "pointer": "/spec/workloads/api/environment/API_TOKEN"
+  }
+]

@@ -1,0 +1,9 @@
+[
+  {
+    "code": "reference.unknown_object",
+    "column": 24,
+    "file": "stackpuddle.yaml",
+    "line": 12,
+    "pointer": "/spec/applications/storefront/workloads/1"
+  }
+]

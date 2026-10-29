@@ -1,0 +1,9 @@
+[
+  {
+    "code": "syntax.custom_tag",
+    "column": 14,
+    "file": "stackpuddle.yaml",
+    "line": 9,
+    "pointer": "/spec/workloads/api/image"
+  }
+]

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:stackpuddle:schema:v1:bundle",
+  "description": "A tested bundle: exactly one tested version for each module it contains.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "version", "modules"],
+  "properties": {
+    "apiVersion": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/apiVersion" },
+    "kind": { "type": "string", "const": "Bundle" },
+    "version": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/semanticVersion" },
+    "modules": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/moduleName" },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["version"],
+        "properties": {
+          "version": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/semanticVersion" }
+        }
+      }
+    }
+  }
+}

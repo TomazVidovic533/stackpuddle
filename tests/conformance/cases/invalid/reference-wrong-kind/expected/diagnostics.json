@@ -1,0 +1,9 @@
+[
+  {
+    "code": "reference.wrong_kind",
+    "column": 11,
+    "file": "stackpuddle.yaml",
+    "line": 11,
+    "pointer": "/spec/workloads/api/prerequisites/0/job"
+  }
+]

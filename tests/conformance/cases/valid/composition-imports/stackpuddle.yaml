@@ -1,0 +1,15 @@
+apiVersion: stackpuddle/v1
+kind: Project
+metadata:
+  name: shop
+spec:
+  imports:
+    - fragments/backend.yaml
+    - fragments/frontend.yaml
+  environments:
+    local:
+      runtime:
+        type: compose
+        context: desktop-linux
+      secrets:
+        provider: local

@@ -1,0 +1,5 @@
+{
+  "description": "The root imports a Manifest where only Fragment files belong.",
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

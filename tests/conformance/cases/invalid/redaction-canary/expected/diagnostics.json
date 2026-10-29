@@ -1,0 +1,9 @@
+[
+  {
+    "code": "structure.exactly_one",
+    "column": 9,
+    "file": "stackpuddle.yaml",
+    "line": 11,
+    "pointer": "/spec/workloads/api/environment/CANARY"
+  }
+]

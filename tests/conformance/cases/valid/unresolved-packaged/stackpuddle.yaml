@@ -1,0 +1,30 @@
+apiVersion: stackpuddle/v1
+kind: Project
+metadata:
+  name: catalog
+spec:
+  manifest: stackpuddle.manifest.yaml
+  modules:
+    db:
+      definition: postgres
+      options:
+        users:
+          app: {purpose: runtime, passwordSecretRef: app-password, memberOf: [writer]}
+          migrator: {purpose: migrations, passwordSecretRef: migrator-password}
+        roles:
+          writer: {login: false}
+        databases:
+          catalog:
+            owner: migrator
+            connectRoles: [writer]
+            schemas:
+              public:
+                grants:
+                  writer: {tables: [SELECT]}
+  environments:
+    local:
+      runtime:
+        type: compose
+        context: desktop-linux
+      secrets:
+        provider: local

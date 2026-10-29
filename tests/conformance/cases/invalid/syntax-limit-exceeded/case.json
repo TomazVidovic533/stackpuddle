@@ -1,0 +1,5 @@
+{
+  "description": "Collections nested deeper than the parser allows.",
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

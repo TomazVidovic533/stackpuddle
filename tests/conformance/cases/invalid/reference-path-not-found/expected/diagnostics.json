@@ -1,0 +1,9 @@
+[
+  {
+    "code": "reference.path_not_found",
+    "column": 7,
+    "file": "stackpuddle.yaml",
+    "line": 7,
+    "pointer": "/spec/imports/0"
+  }
+]

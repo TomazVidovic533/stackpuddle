@@ -1,0 +1,9 @@
+[
+  {
+    "code": "syntax.alias",
+    "column": 13,
+    "file": "stackpuddle.yaml",
+    "line": 10,
+    "pointer": "/spec/workloads/worker"
+  }
+]

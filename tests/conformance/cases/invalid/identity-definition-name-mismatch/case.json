@@ -1,0 +1,5 @@
+{
+  "description": "A local definition declared under one name whose module.yaml names another.",
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

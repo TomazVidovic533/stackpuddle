@@ -1,0 +1,5 @@
+{
+  "description": "A delivery that sets a variable the workload already declares.",
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

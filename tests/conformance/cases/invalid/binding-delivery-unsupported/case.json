@@ -1,0 +1,5 @@
+{
+  "description": "A delivery to a client, which StackPuddle does not run.",
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

@@ -1,0 +1,5 @@
+{
+  "description": "A binding for a Dependency its consumer does not declare.",
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

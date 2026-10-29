@@ -1,0 +1,73 @@
+apiVersion: stackpuddle/v1
+kind: Project
+metadata:
+  name: shop
+spec:
+  inputs:
+    api-log-level:
+      sensitivity: public
+      value: info
+    api-token:
+      sensitivity: secret
+  workloads:
+    api:
+      type: service
+      image: ghcr.io/example/api:1.4.2
+      environment:
+        LOG_LEVEL:
+          input: api-log-level
+        API_TOKEN:
+          input: api-token
+        MODE: standard
+  modules:
+    primary:
+      definition: postgres
+      options:
+        users:
+          app: {purpose: runtime, passwordSecretRef: app-password, memberOf: [writer]}
+          migrator: {purpose: migrations, passwordSecretRef: migrator-password}
+        roles:
+          writer: {login: false}
+        databases:
+          shop:
+            owner: migrator
+            connectRoles: [writer]
+            schemas:
+              public:
+                grants:
+                  writer: {tables: [SELECT]}
+  environments:
+    local:
+      runtime:
+        type: compose
+        context: desktop-linux
+      secrets:
+        provider: local
+      inputs:
+        api-log-level:
+          value: debug
+        api-token:
+          local:
+            file: .env.local
+            key: API_TOKEN
+          process: SHOP_API_TOKEN
+      overrides:
+        workloads:
+          api:
+            environment:
+              MODE: verbose
+        modules:
+          primary:
+            options:
+              startupTimeoutSeconds: 120
+              hostAccess:
+                enabled: true
+                port: 55432
+      metadata:
+        description: The developer machine.
+    ci:
+      runtime:
+        type: compose
+        context: ci-runner
+      secrets:
+        provider: env

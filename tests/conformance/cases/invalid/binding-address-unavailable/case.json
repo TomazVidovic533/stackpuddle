@@ -1,0 +1,17 @@
+{
+  "addresses": [
+    {
+      "context": "host",
+      "host": "127.0.0.1",
+      "port": 49153,
+      "source": {
+        "export": "http",
+        "object": "workload/api"
+      }
+    }
+  ],
+  "description": "The runtime supplies no container address for the bound export.",
+  "environment": "local",
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

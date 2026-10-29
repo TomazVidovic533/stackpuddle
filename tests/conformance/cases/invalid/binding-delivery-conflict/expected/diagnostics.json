@@ -1,0 +1,9 @@
+[
+  {
+    "code": "binding.delivery_conflict",
+    "column": 11,
+    "file": "stackpuddle.yaml",
+    "line": 34,
+    "pointer": "/spec/bindings/0/delivery/environment/API_HOST"
+  }
+]

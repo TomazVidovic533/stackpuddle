@@ -1,0 +1,9 @@
+apiVersion: stackpuddle/v1
+kind: Project
+metadata:
+  name: shop
+spec:
+  workloads:
+    api:
+      type: service
+      image: null

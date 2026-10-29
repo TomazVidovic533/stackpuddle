@@ -1,0 +1,9 @@
+[
+  {
+    "code": "structure.secret_literal",
+    "column": 7,
+    "file": "stackpuddle.yaml",
+    "line": 9,
+    "pointer": "/spec/inputs/db-password/value"
+  }
+]

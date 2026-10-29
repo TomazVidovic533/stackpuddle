@@ -1,0 +1,5 @@
+{
+  "description": "A prerequisite that names a service instead of a job.",
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

@@ -1,0 +1,5 @@
+{
+  "description": "A project-local Module Definition with an option schema, defaults and a contributed workload, used by an instance and bound like any packaged module.",
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

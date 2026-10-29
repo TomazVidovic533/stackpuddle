@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:stackpuddle:schema:v1:model",
+  "description": "The canonical StackPuddle project model. It holds configuration intent and secret references only; never secret values.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/apiVersion" },
+    "kind": { "type": "string", "const": "Model" },
+    "metadata": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/projectMetadata" },
+    "spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "manifest": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/relativePath" },
+        "lock": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/relativePath" },
+        "definitions": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/definitionsSection" },
+        "inputs": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/inputsSection" },
+        "objects": { "type": "array", "items": { "$ref": "#/$defs/object" } },
+        "applications": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/applicationsSection" },
+        "bindings": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/bindingsSection" },
+        "environments": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/environmentsSection" }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "maxLength": 80,
+        "pattern": "^(?:(?:workload|module|client|app)/[a-z][a-z0-9]*(?:-[a-z0-9]+)*|env/[a-z][a-z0-9]*(?:-[a-z0-9]+)*|binding/(?:workload|module|client)/[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[a-z][a-z0-9]*(?:-[a-z0-9]+)*)$"
+      },
+      "additionalProperties": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/provenanceEntry" }
+    }
+  },
+  "$defs": {
+    "object": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["apiVersion", "kind", "key", "spec"],
+      "properties": {
+        "apiVersion": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/apiVersion" },
+        "kind": { "type": "string", "enum": ["Workload", "ModuleInstance", "Client"] },
+        "key": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/objectKey" },
+        "metadata": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/metadata" },
+        "spec": { "type": "object" }
+      },
+      "allOf": [
+        {
+          "if": { "required": ["kind"], "properties": { "kind": { "const": "Workload" } } },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/workloadSpec",
+                "unevaluatedProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": { "required": ["kind"], "properties": { "kind": { "const": "ModuleInstance" } } },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/moduleInstanceSpec",
+                "unevaluatedProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": { "required": ["kind"], "properties": { "kind": { "const": "Client" } } },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/clientSpec",
+                "unevaluatedProperties": false
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

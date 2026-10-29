@@ -1,0 +1,5 @@
+{
+  "description": "A workload that declares both an image and a build.",
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

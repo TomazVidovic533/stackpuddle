@@ -1,0 +1,9 @@
+[
+  {
+    "code": "structure.invalid_value",
+    "column": 17,
+    "file": "stackpuddle.yaml",
+    "line": 11,
+    "pointer": "/spec/modules/primary/options/users/app/purpose"
+  }
+]

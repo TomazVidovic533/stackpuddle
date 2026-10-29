@@ -1,0 +1,9 @@
+[
+  {
+    "code": "binding.unreachable_context",
+    "column": 7,
+    "file": "stackpuddle.yaml",
+    "line": 24,
+    "pointer": "/spec/bindings/0"
+  }
+]

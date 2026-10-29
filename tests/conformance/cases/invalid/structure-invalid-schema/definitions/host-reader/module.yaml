@@ -1,0 +1,6 @@
+apiVersion: stackpuddle/v1
+kind: Module
+name: host-reader
+version: 0.1.0
+configuration:
+  schema: content/options.schema.json

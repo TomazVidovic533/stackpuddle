@@ -1,0 +1,13 @@
+{
+  "description": "Plain declarations: one service, one PostgreSQL instance and one environment, as both YAML and an SDK declare them.",
+  "packaged": [
+    {
+      "repository": "postgres"
+    }
+  ],
+  "parity": {
+    "sdk": "The same service, PostgreSQL instance and environment declared with the SDK's typed constructors; its intent equals expected/model.json byte for byte without provenance."
+  },
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

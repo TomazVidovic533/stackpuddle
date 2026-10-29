@@ -1,0 +1,9 @@
+[
+  {
+    "code": "identity.duplicate_declaration",
+    "column": 5,
+    "file": "environments.yaml",
+    "line": 5,
+    "pointer": "/spec/environments/local"
+  }
+]

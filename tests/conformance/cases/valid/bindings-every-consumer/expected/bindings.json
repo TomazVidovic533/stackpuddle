@@ -1,0 +1,80 @@
+{
+  "apiVersion": "stackpuddle/v1",
+  "bindings": [
+    {
+      "capability": "http.api/1",
+      "consumer": "client/cli",
+      "context": "host",
+      "dependency": "api",
+      "endpoint": {
+        "host": "127.0.0.1",
+        "port": 49153
+      },
+      "source": {
+        "export": "http",
+        "object": "workload/api"
+      }
+    },
+    {
+      "capability": "http.api/1",
+      "consumer": "module/audit",
+      "context": "container",
+      "dependency": "api",
+      "endpoint": {
+        "host": "api",
+        "port": 8080
+      },
+      "source": {
+        "export": "http",
+        "object": "workload/api"
+      }
+    },
+    {
+      "capability": "http.api/1",
+      "consumer": "module/queue",
+      "context": "container",
+      "dependency": "api",
+      "endpoint": {
+        "host": "api",
+        "port": 8080
+      },
+      "source": {
+        "export": "http",
+        "object": "workload/api"
+      }
+    },
+    {
+      "capability": "http.api/1",
+      "consumer": "workload/smoke",
+      "context": "container",
+      "dependency": "api",
+      "endpoint": {
+        "host": "api",
+        "port": 8080
+      },
+      "source": {
+        "export": "http",
+        "object": "workload/api"
+      }
+    },
+    {
+      "capability": "http.api/1",
+      "consumer": "workload/web",
+      "context": "container",
+      "dependency": "api",
+      "endpoint": {
+        "host": "api",
+        "port": 8080
+      },
+      "source": {
+        "export": "http",
+        "object": "workload/api"
+      }
+    }
+  ],
+  "kind": "Bindings",
+  "metadata": {
+    "environment": "local",
+    "project": "shop"
+  }
+}

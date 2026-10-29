@@ -1,0 +1,9 @@
+[
+  {
+    "code": "compatibility.unsupported_kind",
+    "column": 1,
+    "file": "stackpuddle.yaml",
+    "line": 2,
+    "pointer": "/kind"
+  }
+]

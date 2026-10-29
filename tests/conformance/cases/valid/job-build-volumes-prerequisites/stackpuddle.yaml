@@ -1,0 +1,41 @@
+apiVersion: stackpuddle/v1
+kind: Project
+metadata:
+  name: shop
+  description: Workloads that build from source, keep data and wait for jobs.
+spec:
+  workloads:
+    api:
+      type: service
+      build:
+        context: services/api
+        dockerfile: Dockerfile.prod
+        target: runtime
+      command: [./api, --listen, "0.0.0.0:8080"]
+      environment:
+        LOG_LEVEL: info
+      volumes:
+        uploads:
+          path: /var/lib/api/uploads
+      prerequisites:
+        - job: seed
+        - job: migrate
+      metadata:
+        description: Public API.
+    migrate:
+      type: job
+      build:
+        context: services/api
+      command: [./api, migrate]
+    seed:
+      type: job
+      image: ghcr.io/example/seed:2.0.0@sha256:0f1e2d3c4b5a69788796a5b4c3d2e1f00f1e2d3c4b5a69788796a5b4c3d2e1f0
+      prerequisites:
+        - job: migrate
+  environments:
+    local:
+      runtime:
+        type: compose
+        context: default
+      secrets:
+        provider: local

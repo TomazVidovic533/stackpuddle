@@ -1,0 +1,6 @@
+apiVersion: stackpuddle/v1
+kind: Project
+metadata:
+  name: shop
+  name: shop-two
+spec: {}

@@ -1,0 +1,33 @@
+{
+  "apiVersion": "stackpuddle/v1",
+  "cli": {
+    "go": "go1.27.0",
+    "platform": "darwin/arm64",
+    "version": "(devel)"
+  },
+  "engine": {
+    "capabilities": [
+      "module.postgres/1",
+      "runtime.compose/1",
+      "secrets.local/1"
+    ],
+    "stateVersions": {
+      "read": [
+        1
+      ],
+      "write": 1
+    },
+    "storeVersions": {
+      "read": [],
+      "write": 1
+    },
+    "version": "v0.0.0-20261029010000-5d1c0a9b7e42"
+  },
+  "kind": "VersionInfo",
+  "model": {
+    "apiVersions": [
+      "stackpuddle/v1"
+    ],
+    "version": "v0.1.0-alpha.2"
+  }
+}

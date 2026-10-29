@@ -1,0 +1,25 @@
+apiVersion: stackpuddle/v1
+kind: Module
+name: audit-store
+version: 0.1.0
+dataFormat: audit-log/1
+requires:
+  capabilities: [runtime.compose/1]
+configuration:
+  schema: content/options.schema.json
+  defaults: content/defaults.yaml
+workloads:
+  store:
+    type: service
+    image: ghcr.io/example/audit-store:0.3.1
+    listeners:
+      ingest:
+        port: 9400
+        protocol: http
+    exports:
+      ingest:
+        capability: audit.ingest/1
+        listener: ingest
+    volumes:
+      log:
+        path: /var/lib/audit

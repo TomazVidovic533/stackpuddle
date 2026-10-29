@@ -1,0 +1,6 @@
+{
+  "bundle": "bundle.yaml",
+  "description": "The Lock pins a module version the bundle was not tested with.",
+  "root": "stackpuddle.lock.yaml",
+  "subject": "bundle-lock"
+}

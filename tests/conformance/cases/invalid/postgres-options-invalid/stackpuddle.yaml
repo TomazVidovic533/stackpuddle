@@ -1,0 +1,22 @@
+apiVersion: stackpuddle/v1
+kind: Project
+metadata:
+  name: shop
+spec:
+  modules:
+    primary:
+      definition: postgres
+      options:
+        users:
+          app: {purpose: admin, passwordSecretRef: app-password}
+          migrator: {purpose: migrations, passwordSecretRef: migrator-password}
+        roles:
+          writer: {login: false}
+        databases:
+          shop:
+            owner: migrator
+            connectRoles: [writer]
+            schemas:
+              public:
+                grants:
+                  writer: {tables: [SELECT]}

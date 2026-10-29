@@ -1,0 +1,10 @@
+package schemas // import "github.com/TomazVidovic533/stackpuddle/schemas"
+
+Package schemas serves the published stackpuddle JSON Schemas.
+
+FUNCTIONS
+
+func Files() fs.FS
+    Files returns the embedded schema files as "v1/<stem>.schema.json". Safe for
+    concurrent use.
+

@@ -1,0 +1,17 @@
+apiVersion: stackpuddle/v1
+kind: Lock
+bundle:
+  version: 0.1.0-alpha.2
+  source: https://artifacts.example.test/platform/bundle.tar.gz
+  digest: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+modules:
+  postgres:
+    version: 0.1.0-alpha.1
+    source: http://127.0.0.1:8080/platform/postgres.tar.gz
+    format: tar+gzip
+    digest: sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+  queue-cache:
+    version: 1.2.0
+    source: https://artifacts.example.test/platform/queue-cache.tar.gz
+    format: tar+gzip
+    digest: sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd

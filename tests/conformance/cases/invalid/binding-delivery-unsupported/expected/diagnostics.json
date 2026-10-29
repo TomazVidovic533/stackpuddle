@@ -1,0 +1,9 @@
+[
+  {
+    "code": "binding.delivery_unsupported",
+    "column": 7,
+    "file": "stackpuddle.yaml",
+    "line": 29,
+    "pointer": "/spec/bindings/0/delivery"
+  }
+]

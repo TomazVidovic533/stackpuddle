@@ -1,0 +1,9 @@
+[
+  {
+    "code": "binding.unbound_dependency",
+    "column": 9,
+    "file": "stackpuddle.yaml",
+    "line": 22,
+    "pointer": "/spec/workloads/web/dependencies/api"
+  }
+]

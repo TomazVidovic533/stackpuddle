@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:stackpuddle:schema:v1:version-info",
+  "description": "What a StackPuddle build is and which contract versions it reads.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "cli", "model"],
+  "properties": {
+    "apiVersion": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/apiVersion" },
+    "kind": { "type": "string", "const": "VersionInfo" },
+    "cli": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "go", "platform"],
+      "properties": {
+        "version": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/goVersion" },
+        "go": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/goToolchain" },
+        "platform": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/platform" }
+      }
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "apiVersions"],
+      "properties": {
+        "version": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/goVersion" },
+        "apiVersions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^stackpuddle/v[1-9][0-9]*$" }
+        }
+      }
+    },
+    "engine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "capabilities", "stateVersions", "storeVersions"],
+      "properties": {
+        "version": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/goVersion" },
+        "capabilities": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/capability" }
+        },
+        "stateVersions": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["read", "write"],
+          "properties": {
+            "read": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": { "type": "integer", "minimum": 1 }
+            },
+            "write": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "storeVersions": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["read", "write"],
+          "properties": {
+            "read": { "type": "array", "uniqueItems": true, "items": { "type": "integer", "minimum": 1 } },
+            "write": { "type": "integer", "minimum": 1 }
+          }
+        }
+      }
+    }
+  }
+}

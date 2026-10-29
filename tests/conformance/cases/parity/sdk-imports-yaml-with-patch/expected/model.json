@@ -1,0 +1,63 @@
+{
+  "apiVersion": "stackpuddle/v1",
+  "kind": "Model",
+  "metadata": {
+    "name": "shop"
+  },
+  "provenance": {
+    "env/local": {
+      "declared": {
+        "column": 5,
+        "file": "fragment.yaml",
+        "line": 13,
+        "origin": "yaml"
+      }
+    },
+    "workload/api": {
+      "declared": {
+        "column": 5,
+        "file": "fragment.yaml",
+        "line": 5,
+        "origin": "yaml"
+      },
+      "patched": [
+        {
+          "fields": [
+            "/spec/image"
+          ],
+          "origin": "sdk"
+        }
+      ]
+    }
+  },
+  "spec": {
+    "environments": {
+      "local": {
+        "runtime": {
+          "context": "desktop-linux",
+          "type": "compose"
+        },
+        "secrets": {
+          "provider": "local"
+        }
+      }
+    },
+    "objects": [
+      {
+        "apiVersion": "stackpuddle/v1",
+        "key": "api",
+        "kind": "Workload",
+        "spec": {
+          "image": "ghcr.io/example/api:1.5.0",
+          "listeners": {
+            "http": {
+              "port": 8080,
+              "protocol": "http"
+            }
+          },
+          "type": "service"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "description": "A module instance of a definition that is neither local nor supplied, with no Manifest.",
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

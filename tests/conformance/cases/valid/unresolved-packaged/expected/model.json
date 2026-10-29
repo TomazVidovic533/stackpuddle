@@ -1,0 +1,88 @@
+{
+  "apiVersion": "stackpuddle/v1",
+  "kind": "Model",
+  "metadata": {
+    "name": "catalog"
+  },
+  "provenance": {
+    "env/local": {
+      "declared": {
+        "column": 5,
+        "file": "stackpuddle.yaml",
+        "line": 25,
+        "origin": "yaml"
+      }
+    },
+    "module/db": {
+      "declared": {
+        "column": 5,
+        "file": "stackpuddle.yaml",
+        "line": 8,
+        "origin": "yaml"
+      }
+    }
+  },
+  "spec": {
+    "environments": {
+      "local": {
+        "runtime": {
+          "context": "desktop-linux",
+          "type": "compose"
+        },
+        "secrets": {
+          "provider": "local"
+        }
+      }
+    },
+    "manifest": "stackpuddle.manifest.yaml",
+    "objects": [
+      {
+        "apiVersion": "stackpuddle/v1",
+        "key": "db",
+        "kind": "ModuleInstance",
+        "spec": {
+          "definition": "postgres",
+          "options": {
+            "databases": {
+              "catalog": {
+                "connectRoles": [
+                  "writer"
+                ],
+                "owner": "migrator",
+                "schemas": {
+                  "public": {
+                    "grants": {
+                      "writer": {
+                        "tables": [
+                          "SELECT"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "roles": {
+              "writer": {
+                "login": false
+              }
+            },
+            "users": {
+              "app": {
+                "memberOf": [
+                  "writer"
+                ],
+                "passwordSecretRef": "app-password",
+                "purpose": "runtime"
+              },
+              "migrator": {
+                "passwordSecretRef": "migrator-password",
+                "purpose": "migrations"
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}

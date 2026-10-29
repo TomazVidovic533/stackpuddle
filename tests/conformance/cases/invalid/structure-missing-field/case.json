@@ -1,0 +1,5 @@
+{
+  "description": "A workload without its type.",
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

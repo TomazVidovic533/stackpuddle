@@ -1,0 +1,9 @@
+[
+  {
+    "code": "graph.prerequisite_cycle",
+    "column": 7,
+    "file": "stackpuddle.yaml",
+    "line": 15,
+    "pointer": "/spec/workloads/migrate/prerequisites"
+  }
+]

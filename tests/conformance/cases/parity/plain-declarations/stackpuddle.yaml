@@ -1,0 +1,39 @@
+apiVersion: stackpuddle/v1
+kind: Project
+metadata:
+  name: shop
+spec:
+  workloads:
+    api:
+      type: service
+      image: ghcr.io/example/api:1.4.2
+      environment:
+        LOG_LEVEL: info
+      listeners:
+        http:
+          port: 8080
+          protocol: http
+  modules:
+    primary:
+      definition: postgres
+      options:
+        users:
+          app: {purpose: runtime, passwordSecretRef: app-password, memberOf: [writer]}
+          migrator: {purpose: migrations, passwordSecretRef: migrator-password}
+        roles:
+          writer: {login: false}
+        databases:
+          shop:
+            owner: migrator
+            connectRoles: [writer]
+            schemas:
+              public:
+                grants:
+                  writer: {tables: [SELECT, INSERT], sequences: [USAGE]}
+  environments:
+    local:
+      runtime:
+        type: compose
+        context: desktop-linux
+      secrets:
+        provider: local

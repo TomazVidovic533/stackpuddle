@@ -1,0 +1,16 @@
+{
+  "description": "An SDK project imports a YAML Fragment and patches the image of workload/api; expected/model.json is the state after the patch. The Go half loads the Fragment through a one-line root.",
+  "parity": {
+    "patches": [
+      {
+        "fields": [
+          "/spec/image"
+        ],
+        "ref": "workload/api"
+      }
+    ],
+    "sdk": "Imports fragment.yaml, then sets the image of workload/api to ghcr.io/example/api:1.5.0 with a typed patch; provenance keeps the YAML declaration and records the patch with fields [\"/spec/image\"]."
+  },
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

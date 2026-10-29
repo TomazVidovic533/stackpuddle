@@ -1,0 +1,26 @@
+{
+  "addresses": [
+    {
+      "context": "container",
+      "host": "api",
+      "port": 8080,
+      "source": {
+        "export": "http",
+        "object": "workload/api"
+      }
+    },
+    {
+      "context": "host",
+      "host": "127.0.0.1",
+      "port": 49153,
+      "source": {
+        "export": "http",
+        "object": "workload/api"
+      }
+    }
+  ],
+  "description": "A client consumes an export the environment does not expose on the host.",
+  "environment": "local",
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

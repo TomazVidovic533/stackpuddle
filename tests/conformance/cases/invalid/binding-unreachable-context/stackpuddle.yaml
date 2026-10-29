@@ -1,0 +1,35 @@
+apiVersion: stackpuddle/v1
+kind: Project
+metadata:
+  name: shop
+spec:
+  workloads:
+    api:
+      type: service
+      image: ghcr.io/example/api:1.4.2
+      listeners:
+        http:
+          port: 8080
+          protocol: http
+      exports:
+        http:
+          capability: http.api/1
+          listener: http
+  clients:
+    cli:
+      dependencies:
+        api:
+          capability: http.api/1
+  bindings:
+    - consumer: client/cli
+      dependency: api
+      source:
+        object: workload/api
+        export: http
+  environments:
+    local:
+      runtime:
+        type: compose
+        context: desktop-linux
+      secrets:
+        provider: local

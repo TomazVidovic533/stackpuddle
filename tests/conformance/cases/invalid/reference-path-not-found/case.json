@@ -1,0 +1,5 @@
+{
+  "description": "The root imports a file that does not exist.",
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

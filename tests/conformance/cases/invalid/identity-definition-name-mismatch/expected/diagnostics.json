@@ -1,0 +1,9 @@
+[
+  {
+    "code": "identity.definition_name_mismatch",
+    "column": 5,
+    "file": "stackpuddle.yaml",
+    "line": 7,
+    "pointer": "/spec/definitions/audit-store"
+  }
+]

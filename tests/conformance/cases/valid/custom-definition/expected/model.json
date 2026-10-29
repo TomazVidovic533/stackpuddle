@@ -1,0 +1,103 @@
+{
+  "apiVersion": "stackpuddle/v1",
+  "kind": "Model",
+  "metadata": {
+    "name": "shop"
+  },
+  "provenance": {
+    "binding/workload/api/audit": {
+      "declared": {
+        "column": 7,
+        "file": "stackpuddle.yaml",
+        "line": 24,
+        "origin": "yaml"
+      }
+    },
+    "env/local": {
+      "declared": {
+        "column": 5,
+        "file": "stackpuddle.yaml",
+        "line": 33,
+        "origin": "yaml"
+      }
+    },
+    "module/audit": {
+      "declared": {
+        "column": 5,
+        "file": "stackpuddle.yaml",
+        "line": 10,
+        "origin": "yaml"
+      }
+    },
+    "workload/api": {
+      "declared": {
+        "column": 5,
+        "file": "stackpuddle.yaml",
+        "line": 17,
+        "origin": "yaml"
+      }
+    }
+  },
+  "spec": {
+    "bindings": [
+      {
+        "consumer": "workload/api",
+        "dependency": "audit",
+        "parameters": {
+          "batchSize": 50,
+          "stream": "orders"
+        },
+        "source": {
+          "export": "ingest",
+          "object": "module/audit"
+        }
+      }
+    ],
+    "definitions": {
+      "audit-store": {
+        "path": "definitions/audit-store"
+      }
+    },
+    "environments": {
+      "local": {
+        "runtime": {
+          "context": "desktop-linux",
+          "type": "compose"
+        },
+        "secrets": {
+          "provider": "local"
+        }
+      }
+    },
+    "objects": [
+      {
+        "apiVersion": "stackpuddle/v1",
+        "key": "audit",
+        "kind": "ModuleInstance",
+        "metadata": {
+          "description": "Keeps the audit trail."
+        },
+        "spec": {
+          "definition": "audit-store",
+          "options": {
+            "retentionDays": 30
+          }
+        }
+      },
+      {
+        "apiVersion": "stackpuddle/v1",
+        "key": "api",
+        "kind": "Workload",
+        "spec": {
+          "dependencies": {
+            "audit": {
+              "capability": "audit.ingest/1"
+            }
+          },
+          "image": "ghcr.io/example/api:1.4.2",
+          "type": "service"
+        }
+      }
+    ]
+  }
+}

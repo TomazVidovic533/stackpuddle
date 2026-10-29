@@ -1,0 +1,10 @@
+{
+  "description": "A PostgreSQL instance from the packaged module, selected by a Manifest and pinned by a Lock, with the options of the minimal configuration example.",
+  "packaged": [
+    {
+      "repository": "postgres"
+    }
+  ],
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

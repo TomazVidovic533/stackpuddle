@@ -1,0 +1,9 @@
+[
+  {
+    "code": "structure.unexpected_kind",
+    "column": 1,
+    "file": "stackpuddle.manifest.yaml",
+    "line": 2,
+    "pointer": "/kind"
+  }
+]
