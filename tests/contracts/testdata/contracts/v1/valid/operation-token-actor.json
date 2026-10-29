@@ -1,0 +1,20 @@
+{
+  "apiVersion": "stackpuddle/v1",
+  "kind": "Operation",
+  "id": "op-01J9Z8K3M4N5P6Q7R8S9T0V1W5",
+  "continuedBy": "op-01J9Z8K3M4N5P6Q7R8S9T0V1W6",
+  "scope": {
+    "project": "shop",
+    "environment": "staging",
+    "scopeUid": "sc-01J9Z8K3M4N5P6Q7R8S9T0V1W7"
+  },
+  "command": "stop",
+  "selection": { "all": true },
+  "revision": 3,
+  "status": "interrupted",
+  "steps": [],
+  "actor": { "kind": "token" },
+  "createdAt": "2026-10-29T11:00:00Z",
+  "updatedAt": "2026-10-29T11:00:01Z",
+  "finishedAt": "2026-10-29T11:00:01Z"
+}

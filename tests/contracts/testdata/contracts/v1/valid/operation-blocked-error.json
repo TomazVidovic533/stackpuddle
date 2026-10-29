@@ -1,0 +1,30 @@
+{
+  "apiVersion": "stackpuddle/v1",
+  "kind": "Operation",
+  "id": "op-01J9Z8K3M4N5P6Q7R8S9T0V1W8",
+  "scope": {
+    "project": "shop",
+    "environment": "dev",
+    "scopeUid": "sc-01J9Z8K3M4N5P6Q7R8S9T0V1W3"
+  },
+  "command": "destroy",
+  "selection": { "all": true },
+  "revision": 4,
+  "status": "blocked",
+  "steps": [
+    {
+      "id": "s1",
+      "action": "compose.volume-delete",
+      "object": "volume/store-data",
+      "status": "blocked",
+      "startedAt": "2026-10-29T12:00:01Z",
+      "finishedAt": "2026-10-29T12:00:02Z",
+      "error": { "code": "ownership.lost_object", "category": "conflict" }
+    }
+  ],
+  "error": { "code": "ownership.unmapped_owned_object", "category": "conflict" },
+  "actor": { "kind": "os-user" },
+  "createdAt": "2026-10-29T12:00:00Z",
+  "updatedAt": "2026-10-29T12:00:02Z",
+  "finishedAt": "2026-10-29T12:00:02Z"
+}

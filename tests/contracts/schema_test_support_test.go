@@ -9,6 +9,8 @@ import (
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
 	"github.com/santhosh-tekuri/jsonschema/v6/kind"
+
+	"github.com/TomazVidovic533/stackpuddle/tests/internal/testkit/documents"
 )
 
 const schemaBase = "urn:stackpuddle:schema:v1:"
@@ -34,7 +36,7 @@ func compileSchema(t *testing.T, name string) *jsonschema.Schema {
 	compiler := jsonschema.NewCompiler()
 	compiler.AssertFormat()
 
-	for _, schemaName := range []string{"definitions", "manifest", "lock"} {
+	for _, schemaName := range []string{"definitions", "manifest", "lock", "operation"} {
 		path := filepath.Join("..", "..", "schemas", "v1", schemaName+".schema.json")
 		contents, err := os.ReadFile(path)
 		if err != nil {
@@ -112,34 +114,15 @@ func assertFixtureMissingRequiredField(t *testing.T, schemaName, fixturePath, lo
 func setContractField(t *testing.T, document contractDocument, value any, path ...string) {
 	t.Helper()
 
-	object := objectAtPath(t, document, path[:len(path)-1])
+	object := documents.ObjectAt(t, map[string]any(document), path[:len(path)-1])
 	object[path[len(path)-1]] = value
 }
 
 func removeContractField(t *testing.T, document contractDocument, path ...string) {
 	t.Helper()
 
-	object := objectAtPath(t, document, path[:len(path)-1])
+	object := documents.ObjectAt(t, map[string]any(document), path[:len(path)-1])
 	delete(object, path[len(path)-1])
-}
-
-func objectAtPath(t *testing.T, document contractDocument, path []string) map[string]any {
-	t.Helper()
-
-	object := map[string]any(document)
-	for index, segment := range path {
-		child, exists := object[segment]
-		if !exists {
-			t.Fatalf("field %s does not exist", strings.Join(path[:index+1], "/"))
-		}
-
-		var ok bool
-		object, ok = child.(map[string]any)
-		if !ok {
-			t.Fatalf("expected object at %s, got %T", strings.Join(path[:index+1], "/"), child)
-		}
-	}
-	return object
 }
 
 func assertValidationFailure(t *testing.T, err error, location, keyword string) {

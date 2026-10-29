@@ -1,0 +1,40 @@
+{
+  "apiVersion": "stackpuddle/v1",
+  "kind": "Operation",
+  "id": "op-01J9Z8K3M4N5P6Q7R8S9T0V1W2",
+  "scope": {
+    "project": "shop",
+    "environment": "dev",
+    "scopeUid": "sc-01J9Z8K3M4N5P6Q7R8S9T0V1W3"
+  },
+  "command": "up",
+  "selection": { "all": true },
+  "revision": 1,
+  "status": "paused",
+  "steps": [
+    {
+      "id": "s1",
+      "action": "secret.create",
+      "object": "secret/store-password",
+      "status": "completed",
+      "startedAt": "2026-10-29T10:00:01Z",
+      "finishedAt": "2026-10-29T10:00:02Z"
+    },
+    {
+      "id": "s2",
+      "action": "compose.volume",
+      "object": "volume/store-data",
+      "status": "started",
+      "startedAt": "2026-10-29T10:00:02Z"
+    },
+    {
+      "id": "s3",
+      "action": "compose.service",
+      "object": "workload/store",
+      "status": "pending"
+    }
+  ],
+  "actor": { "kind": "os-user" },
+  "createdAt": "2026-10-29T10:00:00Z",
+  "updatedAt": "2026-10-29T10:00:02Z"
+}

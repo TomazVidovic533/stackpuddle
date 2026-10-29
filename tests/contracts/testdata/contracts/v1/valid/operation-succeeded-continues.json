@@ -1,0 +1,36 @@
+{
+  "apiVersion": "stackpuddle/v1",
+  "kind": "Operation",
+  "id": "op-01J9Z8K3M4N5P6Q7R8S9T0V1W4",
+  "continues": "op-01J9Z8K3M4N5P6Q7R8S9T0V1W2",
+  "scope": {
+    "project": "shop",
+    "environment": "dev",
+    "scopeUid": "sc-01J9Z8K3M4N5P6Q7R8S9T0V1W3"
+  },
+  "command": "up",
+  "selection": { "refs": ["database/primary", "database/reporting"], "expandedScope": true },
+  "revision": 2,
+  "status": "succeeded",
+  "steps": [
+    {
+      "id": "s1",
+      "action": "compose.volume",
+      "object": "volume/store-data",
+      "status": "completed-by-observation",
+      "startedAt": "2026-10-29T10:05:01Z",
+      "finishedAt": "2026-10-29T10:05:02Z"
+    },
+    {
+      "id": "s2",
+      "action": "postgres.role",
+      "object": "database/primary/role/app",
+      "status": "not-applied",
+      "finishedAt": "2026-10-29T10:05:03Z"
+    }
+  ],
+  "actor": { "kind": "os-user" },
+  "createdAt": "2026-10-29T10:05:00Z",
+  "updatedAt": "2026-10-29T10:05:04Z",
+  "finishedAt": "2026-10-29T10:05:04Z"
+}
