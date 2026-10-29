@@ -1,0 +1,27 @@
+apiVersion: stackpuddle/v1
+kind: Module
+name: reader
+version: 0.1.0
+requires:
+  capabilities: [runtime.compose/1]
+configuration:
+  schema: content/options.schema.json
+workloads:
+  probe:
+    type: service
+    image: postgres:18.6-bookworm@sha256:1c59e2c3c818eaa0f0628f695b36e7c9e362d6b219b36a54a32df645cbd7e1af
+    environment:
+      PGSSLMODE: verify-full
+      PGSSLROOTCERT: /run/sp/ca.crt
+    command:
+      - sh
+      - -c
+      - |
+        set -eu
+        PGPASSWORD="$(cat /run/sp/password)"
+        export PGPASSWORD
+        psql -X -v ON_ERROR_STOP=1 -At -c 'SELECT 1'
+        exec sleep 3600
+    dependencies:
+      database:
+        capability: postgresql.connection/1

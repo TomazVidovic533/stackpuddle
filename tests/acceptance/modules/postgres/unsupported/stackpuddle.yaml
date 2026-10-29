@@ -1,0 +1,19 @@
+apiVersion: stackpuddle/v1
+kind: Project
+metadata:
+  name: {{NAME}}
+spec:
+  definitions:
+    need:
+      path: definitions/need
+  modules:
+    only:
+      definition: need
+      options: {note: only}
+  environments:
+    local:
+      runtime:
+        type: compose
+        context: default
+      secrets:
+        provider: local

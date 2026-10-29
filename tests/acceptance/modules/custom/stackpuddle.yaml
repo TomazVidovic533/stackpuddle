@@ -1,0 +1,379 @@
+apiVersion: stackpuddle/v1
+kind: Project
+metadata:
+  name: {{NAME}}
+spec:
+  definitions:
+    reader:
+      path: definition/reader
+  modules:
+    reader:
+      definition: reader
+    db:
+      definition: postgres
+      options:
+        users:
+          app_runtime:
+            purpose: runtime
+            passwordSecretRef: app-runtime-password
+            memberOf: [app_readwrite]
+          app_migrator:
+            purpose: migrations
+            passwordSecretRef: app-migrator-password
+        roles:
+          app_readwrite:
+            login: false
+        databases:
+          app:
+            owner: app_migrator
+            connectRoles: [app_readwrite]
+            schemas:
+              public:
+                grants:
+                  app_readwrite:
+                    tables: [SELECT, INSERT, UPDATE, DELETE]
+                    sequences: [USAGE, SELECT]
+  workloads:
+    migrate:
+      type: job
+      image: postgres:18.6-bookworm@sha256:1c59e2c3c818eaa0f0628f695b36e7c9e362d6b219b36a54a32df645cbd7e1af
+      environment:
+        MIGRATION_FAIL: "0"
+        PGSSLMODE: verify-full
+        PGSSLROOTCERT: /run/sp/ca.crt
+      command:
+        - sh
+        - -c
+        - |
+          set -eu
+          if [ "$MIGRATION_FAIL" = "1" ]; then
+            echo "migration refused by MIGRATION_FAIL" >&2
+            exit 3
+          fi
+          PGPASSWORD="$(cat /run/sp/password)"
+          export PGPASSWORD
+          psql -X -v ON_ERROR_STOP=1 -At <<'SQL'
+          CREATE TABLE IF NOT EXISTS schema_history (id serial PRIMARY KEY, applied_by text NOT NULL, applied_at timestamptz NOT NULL DEFAULT now());
+          CREATE TABLE IF NOT EXISTS items (id serial PRIMARY KEY, note text);
+          INSERT INTO schema_history (applied_by) VALUES (current_user);
+          SQL
+      dependencies:
+        database:
+          capability: postgresql.connection/1
+    app:
+      type: service
+      image: postgres:18.6-bookworm@sha256:1c59e2c3c818eaa0f0628f695b36e7c9e362d6b219b36a54a32df645cbd7e1af
+      environment:
+        APP_EDIT: before
+        PGSSLMODE: verify-full
+        PGSSLROOTCERT: /run/sp/ca.crt
+      command:
+        - sh
+        - -c
+        - |
+          set -eu
+          PGPASSWORD="$(cat /run/sp/password)"
+          export PGPASSWORD
+          psql -X -v ON_ERROR_STOP=1 -At -c 'SELECT count(*) FROM items'
+          exec sleep 3600
+      dependencies:
+        database:
+          capability: postgresql.connection/1
+      prerequisites:
+        - job: migrate
+    seed:
+      type: job
+      image: postgres:18.6-bookworm@sha256:1c59e2c3c818eaa0f0628f695b36e7c9e362d6b219b36a54a32df645cbd7e1af
+      environment:
+        PGSSLMODE: verify-full
+        PGSSLROOTCERT: /run/sp/ca.crt
+        PGCONNECT_TIMEOUT: "10"
+      command:
+        - sh
+        - -c
+        - |
+          set -eu
+          PGPASSWORD="$(cat /run/sp/password)"
+          export PGPASSWORD
+          psql -X -v ON_ERROR_STOP=1 -At -c "INSERT INTO items (note) SELECT 'sp-row' WHERE NOT EXISTS (SELECT 1 FROM items WHERE note = 'sp-row')"
+      dependencies:
+        database:
+          capability: postgresql.connection/1
+    query:
+      type: job
+      image: postgres:18.6-bookworm@sha256:1c59e2c3c818eaa0f0628f695b36e7c9e362d6b219b36a54a32df645cbd7e1af
+      environment:
+        PGSSLMODE: verify-full
+        PGSSLROOTCERT: /run/sp/ca.crt
+        PGCONNECT_TIMEOUT: "10"
+      command:
+        - sh
+        - -c
+        - |
+          set -eu
+          PGPASSWORD="$(cat /run/sp/password)"
+          export PGPASSWORD
+          out="$(psql -X -v ON_ERROR_STOP=1 -At -c "SELECT (SELECT ssl FROM pg_stat_ssl WHERE pid = pg_backend_pid())::text || ':' || (SELECT count(*) FROM items WHERE note = 'sp-row')::text")"
+          test "$out" = "true:1" || { echo "want true:1 (TLS and the seeded row), got: $out" >&2; exit 1; }
+      dependencies:
+        database:
+          capability: postgresql.connection/1
+    denied-create-role:
+      type: job
+      image: postgres:18.6-bookworm@sha256:1c59e2c3c818eaa0f0628f695b36e7c9e362d6b219b36a54a32df645cbd7e1af
+      environment:
+        PGSSLMODE: verify-full
+        PGSSLROOTCERT: /run/sp/ca.crt
+        PGCONNECT_TIMEOUT: "10"
+      command:
+        - sh
+        - -c
+        - |
+          set -u
+          PGPASSWORD="$(cat /run/sp/password)"
+          export PGPASSWORD
+          out="$(psql -X -At -v VERBOSITY=sqlstate -c "CREATE ROLE sp_intruder" 2>&1 || true)"
+          case "$out" in *42501*) exit 0 ;; esac
+          echo "want SQLSTATE 42501, got: $out" >&2
+          exit 1
+      dependencies:
+        database:
+          capability: postgresql.connection/1
+    denied-drop-table:
+      type: job
+      image: postgres:18.6-bookworm@sha256:1c59e2c3c818eaa0f0628f695b36e7c9e362d6b219b36a54a32df645cbd7e1af
+      environment:
+        PGSSLMODE: verify-full
+        PGSSLROOTCERT: /run/sp/ca.crt
+        PGCONNECT_TIMEOUT: "10"
+      command:
+        - sh
+        - -c
+        - |
+          set -u
+          PGPASSWORD="$(cat /run/sp/password)"
+          export PGPASSWORD
+          out="$(psql -X -At -v VERBOSITY=sqlstate -c "DROP TABLE items" 2>&1 || true)"
+          case "$out" in *42501*) exit 0 ;; esac
+          echo "want SQLSTATE 42501, got: $out" >&2
+          exit 1
+      dependencies:
+        database:
+          capability: postgresql.connection/1
+    denied-read-catalog:
+      type: job
+      image: postgres:18.6-bookworm@sha256:1c59e2c3c818eaa0f0628f695b36e7c9e362d6b219b36a54a32df645cbd7e1af
+      environment:
+        PGSSLMODE: verify-full
+        PGSSLROOTCERT: /run/sp/ca.crt
+        PGCONNECT_TIMEOUT: "10"
+      command:
+        - sh
+        - -c
+        - |
+          set -u
+          PGPASSWORD="$(cat /run/sp/password)"
+          export PGPASSWORD
+          out="$(psql -X -At -v VERBOSITY=sqlstate -c "SELECT * FROM pg_authid" 2>&1 || true)"
+          case "$out" in *42501*) exit 0 ;; esac
+          echo "want SQLSTATE 42501, got: $out" >&2
+          exit 1
+      dependencies:
+        database:
+          capability: postgresql.connection/1
+  bindings:
+    - consumer: workload/migrate
+      dependency: database
+      source:
+        object: module/db
+        export: sql
+      parameters:
+        user: app_migrator
+        database: app
+      delivery:
+        environment:
+          PGHOST: host
+          PGPORT: port
+          PGDATABASE: database
+          PGUSER: username
+        files:
+          password:
+            path: /run/sp/password
+            mode: "0400"
+            owner: "999:999"
+          ca:
+            path: /run/sp/ca.crt
+            mode: "0444"
+    - consumer: workload/app
+      dependency: database
+      source:
+        object: module/db
+        export: sql
+      parameters:
+        user: app_runtime
+        database: app
+      delivery:
+        environment:
+          PGHOST: host
+          PGPORT: port
+          PGDATABASE: database
+          PGUSER: username
+        files:
+          password:
+            path: /run/sp/password
+            mode: "0400"
+            owner: "999:999"
+          ca:
+            path: /run/sp/ca.crt
+            mode: "0444"
+    - consumer: workload/seed
+      dependency: database
+      source:
+        object: module/db
+        export: sql
+      parameters:
+        user: app_migrator
+        database: app
+      delivery:
+        environment:
+          PGHOST: host
+          PGPORT: port
+          PGDATABASE: database
+          PGUSER: username
+        files:
+          password:
+            path: /run/sp/password
+            mode: "0400"
+            owner: "999:999"
+          ca:
+            path: /run/sp/ca.crt
+            mode: "0444"
+    - consumer: workload/query
+      dependency: database
+      source:
+        object: module/db
+        export: sql
+      parameters:
+        user: app_runtime
+        database: app
+      delivery:
+        environment:
+          PGHOST: host
+          PGPORT: port
+          PGDATABASE: database
+          PGUSER: username
+        files:
+          password:
+            path: /run/sp/password
+            mode: "0400"
+            owner: "999:999"
+          ca:
+            path: /run/sp/ca.crt
+            mode: "0444"
+    - consumer: workload/denied-create-role
+      dependency: database
+      source:
+        object: module/db
+        export: sql
+      parameters:
+        user: app_runtime
+        database: app
+      delivery:
+        environment:
+          PGHOST: host
+          PGPORT: port
+          PGDATABASE: database
+          PGUSER: username
+        files:
+          password:
+            path: /run/sp/password
+            mode: "0400"
+            owner: "999:999"
+          ca:
+            path: /run/sp/ca.crt
+            mode: "0444"
+    - consumer: workload/denied-drop-table
+      dependency: database
+      source:
+        object: module/db
+        export: sql
+      parameters:
+        user: app_runtime
+        database: app
+      delivery:
+        environment:
+          PGHOST: host
+          PGPORT: port
+          PGDATABASE: database
+          PGUSER: username
+        files:
+          password:
+            path: /run/sp/password
+            mode: "0400"
+            owner: "999:999"
+          ca:
+            path: /run/sp/ca.crt
+            mode: "0444"
+    - consumer: workload/denied-read-catalog
+      dependency: database
+      source:
+        object: module/db
+        export: sql
+      parameters:
+        user: app_runtime
+        database: app
+      delivery:
+        environment:
+          PGHOST: host
+          PGPORT: port
+          PGDATABASE: database
+          PGUSER: username
+        files:
+          password:
+            path: /run/sp/password
+            mode: "0400"
+            owner: "999:999"
+          ca:
+            path: /run/sp/ca.crt
+            mode: "0444"
+    - consumer: module/reader
+      dependency: database
+      source:
+        object: module/db
+        export: sql
+      parameters:
+        user: app_runtime
+        database: app
+      delivery:
+        environment:
+          PGHOST: host
+          PGPORT: port
+          PGDATABASE: database
+          PGUSER: username
+        files:
+          password:
+            path: /run/sp/password
+            mode: "0400"
+            owner: "999:999"
+          ca:
+            path: /run/sp/ca.crt
+            mode: "0444"
+  environments:
+    local:
+      runtime:
+        type: compose
+        context: default
+      secrets:
+        provider: local
+      exposures:
+        - source: {object: module/db, export: sql}
+          port: {{PORT_1}}
+    second:
+      runtime:
+        type: compose
+        context: default
+      secrets:
+        provider: local
+      exposures:
+        - source: {object: module/db, export: sql}
+          port: {{PORT_2}}

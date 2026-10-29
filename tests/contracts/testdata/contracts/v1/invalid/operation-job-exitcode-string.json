@@ -1,0 +1,35 @@
+{
+  "apiVersion": "stackpuddle/v1",
+  "kind": "Operation",
+  "id": "op-01J9Z8K3M4N5P6Q7R8S9T0V1W2",
+  "scope": {
+    "project": "shop",
+    "environment": "dev",
+    "scopeUid": "sc-01J9Z8K3M4N5P6Q7R8S9T0V1W3"
+  },
+  "command": "run",
+  "selection": {
+    "all": true
+  },
+  "revision": 1,
+  "status": "succeeded",
+  "steps": [
+    {
+      "id": "s1",
+      "action": "job.run",
+      "object": "job/query",
+      "status": "completed",
+      "startedAt": "2026-10-29T10:00:01Z",
+      "finishedAt": "2026-10-29T10:00:02Z",
+      "job": {
+        "exitCode": "0"
+      }
+    }
+  ],
+  "actor": {
+    "kind": "os-user"
+  },
+  "createdAt": "2026-10-29T10:00:00Z",
+  "updatedAt": "2026-10-29T10:00:02Z",
+  "finishedAt": "2026-10-29T10:00:02Z"
+}

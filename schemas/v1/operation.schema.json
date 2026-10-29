@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:stackpuddle:schema:v1:operation",
+  "$defs": {
+    "operationId": { "type": "string", "pattern": "^op-[0-9A-HJKMNP-TV-Z]{26}$" },
+    "scopeUid": { "type": "string", "pattern": "^sc-[0-9A-HJKMNP-TV-Z]{26}$" },
+    "utcTime": { "type": "string", "format": "date-time", "pattern": "Z$" },
+    "objectRef": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z]+/[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+    },
+    "problem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "category"],
+      "properties": {
+        "code": { "type": "string", "pattern": "^[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*$" },
+        "category": {
+          "type": "string",
+          "enum": ["validation", "not_found", "conflict", "forbidden", "transient", "unexpected"]
+        }
+      }
+    },
+    "selection": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["all"],
+          "properties": {
+            "all": { "type": "boolean", "const": true },
+            "expandedScope": { "type": "boolean" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["refs"],
+          "properties": {
+            "refs": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": { "$ref": "#/$defs/objectRef" }
+            },
+            "expandedScope": { "type": "boolean" }
+          }
+        }
+      ]
+    },
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "action", "object", "status"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^s[1-9][0-9]*$" },
+        "action": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*\\.[a-z][a-z0-9-]*(?:\\.[a-z][a-z0-9-]*)*$"
+        },
+        "object": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-z]+(?:/[a-z0-9][a-z0-9-]*)+$"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "started", "completed", "completed-by-observation", "not-applied", "failed", "blocked"]
+        },
+        "startedAt": { "$ref": "#/$defs/utcTime" },
+        "finishedAt": { "$ref": "#/$defs/utcTime" },
+        "error": { "$ref": "#/$defs/problem" },
+        "job": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["exitCode"],
+          "properties": { "exitCode": { "type": "integer" } }
+        }
+      }
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "id", "scope", "command", "selection", "revision", "status", "steps", "actor", "createdAt", "updatedAt"],
+  "properties": {
+    "apiVersion": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/apiVersion" },
+    "kind": { "type": "string", "const": "Operation" },
+    "id": { "$ref": "#/$defs/operationId" },
+    "continues": { "$ref": "#/$defs/operationId" },
+    "continuedBy": { "$ref": "#/$defs/operationId" },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["project", "environment", "scopeUid"],
+      "properties": {
+        "project": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/scopeName" },
+        "environment": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/scopeName" },
+        "scopeUid": { "$ref": "#/$defs/scopeUid" }
+      }
+    },
+    "command": { "type": "string", "enum": ["up", "stop", "destroy", "run"] },
+    "selection": { "$ref": "#/$defs/selection" },
+    "revision": { "type": "integer", "minimum": 1 },
+    "status": {
+      "type": "string",
+      "enum": ["running", "succeeded", "failed", "cancelled", "interrupted", "blocked"]
+    },
+    "steps": { "type": "array", "items": { "$ref": "#/$defs/step" } },
+    "error": { "$ref": "#/$defs/problem" },
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": { "type": "string", "enum": ["os-user", "token"] }
+      }
+    },
+    "createdAt": { "$ref": "#/$defs/utcTime" },
+    "updatedAt": { "$ref": "#/$defs/utcTime" },
+    "finishedAt": { "$ref": "#/$defs/utcTime" }
+  }
+}

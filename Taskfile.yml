@@ -1,58 +1,151 @@
 version: '3'
 
+env:
+  GOWORK: 'off'
+
+vars:
+  PUBLIC_PACKAGES: artifacts model schemas validation validation/postgres
+  # The published branch that holds the accepted decision records; CI passes its target branch.
+  DECISION_BASE_REF: origin/m00-bootstrap-and-import
+
 tasks:
   test:
-    desc: Run unit, contract, and local integration tests
+    desc: Run the unit, contract, conformance and filesystem tests (no Docker needed)
     cmds:
       - task: test:unit
       - task: test:contract
-      - task: test:integration
+      - task: test:conformance
+      - task: test:filesystem
 
   test:unit:
     desc: Test isolated rules and value contracts
     cmds:
-      - go test -race -count=1 ./tests/unit/...
+      - go test -race -count=1 ./tests/unit/... ./internal/...
 
   test:contract:
-    desc: Test published schemas and archive conformance
+    desc: Test published schemas, archive conformance and inspection allocation
     cmds:
       - go test -race -count=1 ./tests/contracts/...
 
-  test:integration:
-    desc: Test archive building and real stream and filesystem boundaries
+  test:conformance:
+    desc: Run the shared model conformance cases
     cmds:
-      - go test -race -count=1 ./tests/integration/...
+      - go test -race -count=1 ./tests/conformance/...
+
+  test:filesystem:
+    desc: Test archive building against real files and stream failures
+    cmds:
+      - go test -race -count=1 ./tests/filesystem/...
+
+  test:integration:
+    desc: Run the Docker-backed tests (needs Docker Compose)
+    preconditions:
+      - sh: docker compose version
+        msg: "test:integration needs Docker Compose: `docker compose version` failed"
+    cmds:
+      - go vet -tags integration ./tests/integration/...
+      - go test -race -count=1 -v -tags integration ./tests/integration/...
 
   test:acceptance:
-    desc: Packaged consumer acceptance (not implemented yet)
+    desc: Run the consumer lifecycle and packaged acceptance suites (needs Docker Compose and STACKPUDDLE_CLI, the absolute path of a built stackpuddle binary)
+    preconditions:
+      - sh: docker compose version
+        msg: "test:acceptance needs Docker Compose: `docker compose version` failed"
+      - sh: test -x "$STACKPUDDLE_CLI"
+        msg: "test:acceptance needs STACKPUDDLE_CLI set to the absolute path of an executable stackpuddle binary"
     cmds:
-      - |
-        echo "Acceptance suite is not implemented: packaged consumer verification is incomplete." >&2
-        exit 1
+      - go vet -tags acceptance ./tests/acceptance/...
+      - go test -count=1 -p 1 -v -tags acceptance -timeout 30m ./tests/acceptance/...
 
   test:fuzz:
-    desc: Fuzz archive inspection for 30 seconds
+    desc: Fuzz archive inspection, model loading and the PostgreSQL rules for 30 seconds each
+    # The default 60 s minimisation would spend the 30 s budget shrinking the first new input.
     cmds:
-      - go test ./tests/contracts/artifacts -run='^$' -fuzz=FuzzInspect -fuzztime=30s -parallel=2
+      - go test ./tests/contracts/artifacts -run='^$' -fuzz=FuzzInspect -fuzztime=30s -fuzzminimizetime=2s -parallel=2
+      - go test ./tests/unit/model -run='^$' -fuzz=FuzzLoad -fuzztime=30s -fuzzminimizetime=2s -parallel=2
+      - go test ./tests/unit/validation/postgres -run='^$' -fuzz=FuzzValidate -fuzztime=30s -fuzzminimizetime=2s -parallel=2
 
   check:
-    desc: Check formatting, static analysis, dependencies, and local tests
+    desc: Check formatting, static analysis, dependencies, public surfaces, decision records and the Docker-free tests
     cmds:
       - task: check:format
       - go vet ./...
+      - go mod tidy -diff
       - go mod verify
+      - go mod verify -modfile=tools.mod
+      - task: check:api
+      - task: check:decision-record-immutable
+      - task: check:integration-tags
       - task: test
 
   check:format:
     internal: true
     cmds:
       - |
-        unformatted=$(gofmt -l .)
+        gofmt="$(go env GOROOT)/bin/gofmt"
+        echo "check:format: gofmt from $(go env GOVERSION) at $gofmt"
+        unformatted=$("$gofmt" -l .) || exit 1
         if [ -n "$unformatted" ]; then
           echo "Go files need formatting:"
           printf '%s\n' "$unformatted"
           exit 1
         fi
+
+  check:api:
+    desc: Compare each public package's go doc output with its committed api.txt
+    cmds:
+      - |
+        status=0
+        for pkg in {{.PUBLIC_PACKAGES}}; do
+          if ! go doc -all "./$pkg" | diff -u "$pkg/api.txt" -; then
+            echo "check:api: the public surface of $pkg differs from $pkg/api.txt; review the change and regenerate it with: go doc -all ./$pkg > $pkg/api.txt" >&2
+            status=1
+          fi
+        done
+        exit $status
+
+  check:decision-record-immutable:
+    desc: Fail when an accepted decision record changed any line other than its status since DECISION_BASE_REF
+    cmds:
+      - |
+        base="{{.DECISION_BASE_REF}}"; dir=docs/architecture/decisions
+        git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "check:decision-record-immutable: not a git checkout; it compares $dir with $base" >&2; exit 1; }
+        git rev-parse --verify --quiet "$base^{commit}" >/dev/null || { echo "check:decision-record-immutable: base ref $base not found; fetch it or run with DECISION_BASE_REF=<ref>" >&2; exit 1; }
+        status=0
+        for file in $(git ls-tree -r --name-only "$base" -- "$dir" | grep '\.md$' | grep -v '/README\.md$'); do
+          state=$(git show "$base:$file" | sed -n 's/^- Status: //p' | head -n 1)
+          case "$state" in ''|Proposed*) continue ;; esac
+          if [ ! -f "$file" ]; then echo "check:decision-record-immutable: $file was $state at $base and is missing; supersede a record, never delete it" >&2; status=1; continue; fi
+          changed=$(git diff --no-ext-diff --unified=0 "$base" -- "$file" | grep -E '^[+-]' | grep -vE '^(\+\+\+|---) ' | grep -vE '^[+-]- Status: ' || true)
+          [ -z "$changed" ] || { echo "check:decision-record-immutable: $file was $state at $base; only its '- Status:' line may change" >&2; status=1; }
+        done
+        exit $status
+
+  check:integration-tags:
+    desc: Require the integration build constraint on every Go file under tests/integration
+    cmds:
+      - |
+        files=$(find tests/integration -name '*.go' -type f) || { echo "check:integration-tags: cannot list tests/integration" >&2; exit 1; }
+        untagged=""
+        for file in $files; do
+          [ "$(head -n 1 "$file")" = "//go:build integration" ] || untagged="$untagged $file"
+        done
+        if [ -n "$untagged" ]; then
+          echo "check:integration-tags: these files lack '//go:build integration' on their first line, so check would run them:$untagged" >&2
+          exit 1
+        fi
+
+  check:supply-chain:
+    desc: Scan dependencies with govulncheck from tools.mod (needs network access to https://vuln.go.dev)
+    cmds:
+      - |
+        status=0
+        go tool -modfile=tools.mod govulncheck ./... || status=$?
+        case "$status" in
+          0) ;;
+          3) echo "check:supply-chain: govulncheck found vulnerabilities" >&2; exit 3 ;;
+          *) echo "check:supply-chain: govulncheck did not complete; it needs https://vuln.go.dev (exit $status)" >&2; exit "$status" ;;
+        esac
 
   verify:
     desc: Compatibility alias for check

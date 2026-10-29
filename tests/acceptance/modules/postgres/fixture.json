@@ -1,0 +1,12 @@
+{
+  "modules": [{"name": "postgres", "version": "0.1.0-alpha.1", "source": "../../../../modules/postgres"}],
+  "environments": [{"name": "local", "portSlot": 1}, {"name": "second", "portSlot": 2}],
+  "seedJob": "seed",
+  "queryJob": "query",
+  "deniedJobs": ["denied-create-role", "denied-drop-table", "denied-read-catalog"],
+  "persistent": "module/db",
+  "consumers": ["app"],
+  "killRefs": ["module/db"],
+  "edit": {"file": "stackpuddle.yaml", "old": "APP_EDIT: before", "new": "APP_EDIT: after", "container": "app"},
+  "unsupported": "unsupported"
+}
