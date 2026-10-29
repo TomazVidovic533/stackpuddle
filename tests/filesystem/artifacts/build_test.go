@@ -15,7 +15,7 @@ import (
 	"github.com/TomazVidovic533/stackpuddle/internal/artifacts/envelope"
 	"github.com/TomazVidovic533/stackpuddle/internal/artifacts/identity"
 	"github.com/TomazVidovic533/stackpuddle/internal/artifacts/targzip"
-	"github.com/TomazVidovic533/stackpuddle/tests/testkit/artifacts"
+	"github.com/TomazVidovic533/stackpuddle/tests/internal/testkit/artifacts"
 )
 
 func TestBuildProducesIdenticalModuleBytesAndDigest(t *testing.T) {
@@ -81,7 +81,7 @@ func TestBuildBundleContainsOnlyDescriptor(t *testing.T) {
 	if digest != actual {
 		t.Fatalf("build digest %q differs from archive digest %q", digest, actual)
 	}
-	if err := targzip.Inspect(envelope.Bundle, bytes.NewReader(archive.Bytes()), envelope.DefaultLimits); err != nil {
+	if err := targzip.Inspect(envelope.Bundle, bytes.NewReader(archive.Bytes()), envelope.DefaultLimits()); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -95,7 +95,7 @@ func TestBuildAndInspectMultipleUnalignedContentFiles(t *testing.T) {
 	if _, err := targzip.Build(envelope.Module, root, &archive); err != nil {
 		t.Fatal(err)
 	}
-	if err := targzip.Inspect(envelope.Module, bytes.NewReader(archive.Bytes()), envelope.DefaultLimits); err != nil {
+	if err := targzip.Inspect(envelope.Module, bytes.NewReader(archive.Bytes()), envelope.DefaultLimits()); err != nil {
 		t.Fatalf("inspecting a built archive: %v", err)
 	}
 }
@@ -144,7 +144,7 @@ func TestBuildOrdersEntriesAndNormalizesModes(t *testing.T) {
 
 func TestBuildRejectsDescriptorAboveInspectionLimit(t *testing.T) {
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "module.yaml"), bytes.Repeat([]byte("x"), int(envelope.DefaultLimits.DescriptorBytes)+1), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "module.yaml"), bytes.Repeat([]byte("x"), int(envelope.DefaultLimits().DescriptorBytes)+1), 0644); err != nil {
 		t.Fatal(err)
 	}
 	var archive bytes.Buffer

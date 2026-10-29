@@ -1,5 +1,6 @@
 // Package artifacts builds and inspects deterministic tar+gzip archives.
-// Inspection checks structure, not descriptor schemas or publisher identity.
+// Inspection checks structure, limits and entry names, not descriptor schemas or publisher
+// identity.
 package artifacts
 
 import (
@@ -11,13 +12,17 @@ import (
 )
 
 // Build writes an archive and returns its compressed-byte SHA-256 digest.
-// It uses default limits and requires a stable source tree.
+// It uses default limits and reads every file through a handle rooted at sourceDir, so a
+// symlink swapped in after the walk cannot reach outside it; a file replaced or resized after
+// the walk fails with SourceChanged.
 func Build(kind Kind, sourceDir string, dst io.Writer) (string, error) {
 	return targzip.Build(envelope.Kind(kind), sourceDir, dst)
 }
 
-// Inspect checks archive structure and limits without extracting files.
-// It rejects invalid kinds and limits before reading.
+// Inspect checks archive structure, limits and entry names without extracting files. It reads
+// the source once as a stream, so memory grows with the entry count, not the archive size.
+// It rejects invalid kinds and limits before reading, and names unsafe to extract (case
+// collisions, Windows device names, NTFS stream syntax, control characters) with their own codes.
 func Inspect(kind Kind, source io.Reader, limits Limits) error {
 	return targzip.Inspect(envelope.Kind(kind), source, envelope.Limits(limits))
 }

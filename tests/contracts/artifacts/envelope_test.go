@@ -10,7 +10,7 @@ import (
 
 	"github.com/TomazVidovic533/stackpuddle/internal/artifacts/envelope"
 	"github.com/TomazVidovic533/stackpuddle/internal/artifacts/targzip"
-	"github.com/TomazVidovic533/stackpuddle/tests/testkit/artifacts"
+	"github.com/TomazVidovic533/stackpuddle/tests/internal/testkit/artifacts"
 )
 
 func TestInspectAcceptsBuiltModuleAndBundle(t *testing.T) {
@@ -18,11 +18,11 @@ func TestInspectAcceptsBuiltModuleAndBundle(t *testing.T) {
 	if _, err := targzip.Build(envelope.Module, artifacts.ModuleSource(t), &module); err != nil {
 		t.Fatal(err)
 	}
-	if err := targzip.Inspect(envelope.Module, bytes.NewReader(module.Bytes()), envelope.DefaultLimits); err != nil {
+	if err := targzip.Inspect(envelope.Module, bytes.NewReader(module.Bytes()), envelope.DefaultLimits()); err != nil {
 		t.Fatal(err)
 	}
 	bundle := artifacts.Archive(t, artifacts.Entry{Name: "bundle.yaml", Data: "modules: {}\n"})
-	if err := targzip.Inspect(envelope.Bundle, bytes.NewReader(bundle), envelope.DefaultLimits); err != nil {
+	if err := targzip.Inspect(envelope.Bundle, bytes.NewReader(bundle), envelope.DefaultLimits()); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -43,7 +43,7 @@ func TestInspectRejectsTamperedSecondFilePadding(t *testing.T) {
 		t.Fatal("second file content not found in tar")
 	}
 	tarBytes[contentStart+len(secondContent)] = 1
-	err := targzip.Inspect(envelope.Module, bytes.NewReader(artifacts.Gzip(t, tarBytes)), envelope.DefaultLimits)
+	err := targzip.Inspect(envelope.Module, bytes.NewReader(artifacts.Gzip(t, tarBytes)), envelope.DefaultLimits())
 	artifacts.RequireFailure(t, err, envelope.InvalidEnvelope, envelope.Padding)
 }
 
@@ -53,7 +53,7 @@ func TestInspectRejectsHiddenBytesAfterTarNameNUL(t *testing.T) {
 	const secondHeader = 1024
 	tarBytes[secondHeader+len("content/a")+1] = 'b'
 	artifacts.RepairChecksum(t, tarBytes[secondHeader:secondHeader+512])
-	err := targzip.Inspect(envelope.Module, bytes.NewReader(artifacts.Gzip(t, tarBytes)), envelope.DefaultLimits)
+	err := targzip.Inspect(envelope.Module, bytes.NewReader(artifacts.Gzip(t, tarBytes)), envelope.DefaultLimits())
 	artifacts.RequireFailure(t, err, envelope.InvalidEnvelope, envelope.TarName)
 }
 
@@ -62,7 +62,7 @@ func TestInspectRejectsNULRegularTypeflag(t *testing.T) {
 	tarBytes := artifacts.Decompress(t, archive)
 	tarBytes[156] = 0
 	artifacts.RepairChecksum(t, tarBytes[:512])
-	err := targzip.Inspect(envelope.Module, bytes.NewReader(artifacts.Gzip(t, tarBytes)), envelope.DefaultLimits)
+	err := targzip.Inspect(envelope.Module, bytes.NewReader(artifacts.Gzip(t, tarBytes)), envelope.DefaultLimits())
 	artifacts.RequireFailure(t, err, envelope.InvalidEnvelope, envelope.TarType)
 }
 
@@ -71,7 +71,7 @@ func TestInspectRejectsNonzeroUSTARReservedTail(t *testing.T) {
 	tarBytes := artifacts.Decompress(t, archive)
 	tarBytes[500] = 1
 	artifacts.RepairChecksum(t, tarBytes[:512])
-	err := targzip.Inspect(envelope.Module, bytes.NewReader(artifacts.Gzip(t, tarBytes)), envelope.DefaultLimits)
+	err := targzip.Inspect(envelope.Module, bytes.NewReader(artifacts.Gzip(t, tarBytes)), envelope.DefaultLimits())
 	artifacts.RequireFailure(t, err, envelope.InvalidEnvelope, envelope.ReservedBytes)
 }
 
@@ -129,7 +129,7 @@ func TestInspectRejectsUnsafeEntries(t *testing.T) {
 				kind = envelope.Bundle
 			}
 			archive := artifacts.Archive(t, test.entries...)
-			err := targzip.Inspect(kind, bytes.NewReader(archive), envelope.DefaultLimits)
+			err := targzip.Inspect(kind, bytes.NewReader(archive), envelope.DefaultLimits())
 			artifacts.RequireFailure(t, err, envelope.InvalidEnvelope, test.code)
 		})
 	}
@@ -157,14 +157,14 @@ func TestInspectRejectsMalformedOrOversizedArchives(t *testing.T) {
 		limits envelope.Limits
 		code   envelope.Code
 	}{
-		{"truncated gzip", valid[:len(valid)-4], envelope.DefaultLimits, envelope.GzipBody},
-		{"malformed tar", invalidTar, envelope.DefaultLimits, envelope.EndMarkers},
-		{"missing tar end block", shortTarTrailer, envelope.DefaultLimits, envelope.EndMarkers},
-		{"nonzero file padding", artifacts.Gzip(t, badPadding), envelope.DefaultLimits, envelope.Padding},
-		{"trailing bytes", append(bytes.Clone(valid), 1), envelope.DefaultLimits, envelope.TrailingCompressed},
-		{"second gzip member", append(bytes.Clone(valid), second...), envelope.DefaultLimits, envelope.TrailingCompressed},
-		{"optional empty gzip name", optionalEmptyName, envelope.DefaultLimits, envelope.GzipHeader},
-		{"noncanonical gzip compression hint", wrongCompressionHint, envelope.DefaultLimits, envelope.GzipHeader},
+		{"truncated gzip", valid[:len(valid)-4], envelope.DefaultLimits(), envelope.GzipBody},
+		{"malformed tar", invalidTar, envelope.DefaultLimits(), envelope.EndMarkers},
+		{"missing tar end block", shortTarTrailer, envelope.DefaultLimits(), envelope.EndMarkers},
+		{"nonzero file padding", artifacts.Gzip(t, badPadding), envelope.DefaultLimits(), envelope.Padding},
+		{"trailing bytes", append(bytes.Clone(valid), 1), envelope.DefaultLimits(), envelope.TrailingCompressed},
+		{"second gzip member", append(bytes.Clone(valid), second...), envelope.DefaultLimits(), envelope.TrailingCompressed},
+		{"optional empty gzip name", optionalEmptyName, envelope.DefaultLimits(), envelope.GzipHeader},
+		{"noncanonical gzip compression hint", wrongCompressionHint, envelope.DefaultLimits(), envelope.GzipHeader},
 		{"descriptor limit", valid, envelope.Limits{DescriptorBytes: 1, FileBytes: 10, TotalBytes: 10, Entries: 10, PathBytes: 240, PathDepth: 32}, envelope.FileLimit},
 		{"file limit", withContent, envelope.Limits{DescriptorBytes: 10, FileBytes: 5, TotalBytes: 20, Entries: 10, PathBytes: 240, PathDepth: 32}, envelope.FileLimit},
 		{"total limit", withContent, envelope.Limits{DescriptorBytes: 10, FileBytes: 10, TotalBytes: 10, Entries: 10, PathBytes: 240, PathDepth: 32}, envelope.TotalLimit},
@@ -202,7 +202,7 @@ func TestInspectRejectsDuplicateRegularDescriptors(t *testing.T) {
 				artifacts.Entry{Name: test.descriptor, Data: "first"},
 				artifacts.Entry{Name: test.descriptor, Data: "second"},
 			)
-			err := targzip.Inspect(test.kind, bytes.NewReader(archive), envelope.DefaultLimits)
+			err := targzip.Inspect(test.kind, bytes.NewReader(archive), envelope.DefaultLimits())
 			artifacts.RequireFailure(t, err, envelope.InvalidEnvelope, envelope.DuplicateEntry)
 			var failure *envelope.Error
 			if !errors.As(err, &failure) || failure.Entry != test.descriptor {

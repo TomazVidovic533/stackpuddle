@@ -9,7 +9,7 @@ import (
 	"github.com/TomazVidovic533/stackpuddle/internal/artifacts/envelope"
 	"github.com/TomazVidovic533/stackpuddle/internal/artifacts/identity"
 	"github.com/TomazVidovic533/stackpuddle/internal/artifacts/targzip"
-	"github.com/TomazVidovic533/stackpuddle/tests/testkit/artifacts"
+	"github.com/TomazVidovic533/stackpuddle/tests/internal/testkit/artifacts"
 )
 
 type failingReader struct{ cause error }
@@ -24,7 +24,7 @@ func TestStreamFailuresPreserveOperationalCause(t *testing.T) {
 	archive := artifacts.Archive(t, artifacts.Entry{Name: "module.yaml", Data: "module"})
 	for _, offset := range []int{0, 10, len(archive) - 4, len(archive)} {
 		source := io.MultiReader(bytes.NewReader(archive[:offset]), failingReader{cause})
-		err := targzip.Inspect(envelope.Module, source, envelope.DefaultLimits)
+		err := targzip.Inspect(envelope.Module, source, envelope.DefaultLimits())
 		if !errors.Is(err, cause) {
 			t.Fatalf("offset %d lost cause: %v", offset, err)
 		}

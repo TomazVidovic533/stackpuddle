@@ -1,0 +1,112 @@
+package artifacts // import "github.com/TomazVidovic533/stackpuddle/artifacts"
+
+Package artifacts builds and inspects deterministic tar+gzip archives.
+Inspection checks structure, limits and entry names, not descriptor schemas or
+publisher identity.
+
+CONSTANTS
+
+const (
+	InvalidArgument = envelope.InvalidArgument
+	InvalidEnvelope = envelope.InvalidEnvelope
+)
+const (
+	CaseCollision      = envelope.CaseCollision
+	CompressedLimit    = envelope.CompressedLimit
+	ContentType        = envelope.ContentType
+	ControlCharacter   = envelope.ControlCharacter
+	DescriptorType     = envelope.DescriptorType
+	DirectoryEntry     = envelope.DirectoryEntry
+	DuplicateEntry     = envelope.DuplicateEntry
+	EmptyArchive       = envelope.EmptyArchive
+	EndMarkers         = envelope.EndMarkers
+	EntryCollision     = envelope.EntryCollision
+	EntryContent       = envelope.EntryContent
+	EntryLimit         = envelope.EntryLimit
+	EntryOrder         = envelope.EntryOrder
+	EntryType          = envelope.EntryType
+	ExpandedLimit      = envelope.ExpandedLimit
+	FileLimit          = envelope.FileLimit
+	FirstEntry         = envelope.FirstEntry
+	GzipBody           = envelope.GzipBody
+	GzipHeader         = envelope.GzipHeader
+	LimitsOverflow     = envelope.LimitsOverflow
+	Metadata           = envelope.Metadata
+	MissingDescriptor  = envelope.MissingDescriptor
+	NonpositiveLimits  = envelope.NonpositiveLimits
+	OutsideLayout      = envelope.OutsideLayout
+	Padding            = envelope.Padding
+	PathLimit          = envelope.PathLimit
+	RegularEntry       = envelope.RegularEntry
+	ReservedBytes      = envelope.ReservedBytes
+	ReservedName       = envelope.ReservedName
+	SourceChanged      = envelope.SourceChanged
+	SourceEntryType    = envelope.SourceEntryType
+	SourceNotDirectory = envelope.SourceNotDirectory
+	StreamName         = envelope.StreamName
+	TarHeader          = envelope.TarHeader
+	TarName            = envelope.TarName
+	TarType            = envelope.TarType
+	TotalLimit         = envelope.TotalLimit
+	TrailingCompressed = envelope.TrailingCompressed
+	TrailingTar        = envelope.TrailingTar
+	UnknownKind        = envelope.UnknownKind
+	UnsafePath         = envelope.UnsafePath
+)
+
+FUNCTIONS
+
+func Build(kind Kind, sourceDir string, dst io.Writer) (string, error)
+    Build writes an archive and returns its compressed-byte SHA-256 digest.
+    It uses default limits and reads every file through a handle rooted at
+    sourceDir, so a symlink swapped in after the walk cannot reach outside it;
+    a file replaced or resized after the walk fails with SourceChanged.
+
+func Digest(source io.Reader) (string, error)
+    Digest returns the input's "sha256:"-prefixed hash without validating it.
+
+func Inspect(kind Kind, source io.Reader, limits Limits) error
+    Inspect checks archive structure, limits and entry names without extracting
+    files. It reads the source once as a stream, so memory grows with the entry
+    count, not the archive size. It rejects invalid kinds and limits before
+    reading, and names unsafe to extract (case collisions, Windows device names,
+    NTFS stream syntax, control characters) with their own codes.
+
+
+TYPES
+
+type Category = envelope.Category
+    Category distinguishes invalid arguments from invalid archives.
+
+type Code = envelope.Code
+    Code identifies the rule that failed.
+
+type Error = envelope.Error
+    Error describes why an archive or argument was rejected. Use errors.AsType
+    to inspect it. Entry is the rejected name escaped as a Go string literal
+    without its quotes, so control bytes print as escapes such as \x1b.
+    I/O errors may be returned directly; use errors.Is to check their cause.
+
+type Kind string
+    Kind identifies a module or bundle archive.
+
+const (
+	Module Kind = "module"
+	Bundle Kind = "bundle"
+)
+type Limits struct {
+	DescriptorBytes int64
+	FileBytes       int64
+	TotalBytes      int64
+	Entries         int
+	PathBytes       int
+	PathDepth       int
+}
+    Limits caps archive size and entries during Inspect. All fields must be
+    positive. Content sizes are uncompressed; paths are limited by byte length
+    and depth. Build uses DefaultLimits.
+
+func DefaultLimits() Limits
+    DefaultLimits returns the default archive limits. Each call returns a new
+    value, so changing one never changes the defaults.
+

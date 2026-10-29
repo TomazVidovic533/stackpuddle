@@ -10,13 +10,17 @@ type Limits struct {
 	PathDepth       int
 }
 
-var DefaultLimits = Limits{
-	DescriptorBytes: 1 << 20,
-	FileBytes:       64 << 20,
-	TotalBytes:      256 << 20,
-	Entries:         4096,
-	PathBytes:       240,
-	PathDepth:       32,
+// DefaultLimits returns the limits Build enforces and callers start from. Each call returns a
+// new value, so no caller can change what another reads.
+func DefaultLimits() Limits {
+	return Limits{
+		DescriptorBytes: 1 << 20,
+		FileBytes:       64 << 20,
+		TotalBytes:      256 << 20,
+		Entries:         4096,
+		PathBytes:       240,
+		PathDepth:       32,
+	}
 }
 
 // Bounds validates limits and returns tar and compressed byte ceilings.

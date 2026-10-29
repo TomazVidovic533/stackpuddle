@@ -22,9 +22,10 @@ type Limits struct {
 	PathDepth       int
 }
 
-// DefaultLimits returns a copy of the default archive limits.
+// DefaultLimits returns the default archive limits. Each call returns a new value, so changing
+// one never changes the defaults.
 func DefaultLimits() Limits {
-	return Limits(envelope.DefaultLimits)
+	return Limits(envelope.DefaultLimits())
 }
 
 // Category distinguishes invalid arguments from invalid archives.
@@ -39,8 +40,10 @@ const (
 type Code = envelope.Code
 
 const (
+	CaseCollision      = envelope.CaseCollision
 	CompressedLimit    = envelope.CompressedLimit
 	ContentType        = envelope.ContentType
+	ControlCharacter   = envelope.ControlCharacter
 	DescriptorType     = envelope.DescriptorType
 	DirectoryEntry     = envelope.DirectoryEntry
 	DuplicateEntry     = envelope.DuplicateEntry
@@ -65,8 +68,11 @@ const (
 	PathLimit          = envelope.PathLimit
 	RegularEntry       = envelope.RegularEntry
 	ReservedBytes      = envelope.ReservedBytes
+	ReservedName       = envelope.ReservedName
+	SourceChanged      = envelope.SourceChanged
 	SourceEntryType    = envelope.SourceEntryType
 	SourceNotDirectory = envelope.SourceNotDirectory
+	StreamName         = envelope.StreamName
 	TarHeader          = envelope.TarHeader
 	TarName            = envelope.TarName
 	TarType            = envelope.TarType
@@ -77,6 +83,8 @@ const (
 	UnsafePath         = envelope.UnsafePath
 )
 
-// Error describes why an archive or argument was rejected. Use errors.As to inspect it.
-// I/O errors may be returned directly; use errors.Is to check their cause.
+// Error describes why an archive or argument was rejected. Use errors.AsType to inspect it.
+// Entry is the rejected name escaped as a Go string literal without its quotes, so control
+// bytes print as escapes such as \x1b. I/O errors may be returned directly; use errors.Is to
+// check their cause.
 type Error = envelope.Error

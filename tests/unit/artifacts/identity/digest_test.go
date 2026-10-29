@@ -1,6 +1,7 @@
 package identity_test
 
 import (
+	"crypto/sha256"
 	"strings"
 	"testing"
 
@@ -22,5 +23,17 @@ func TestDigestUsesCompressedBytes(t *testing.T) {
 	}
 	if changed == empty {
 		t.Fatal("changed bytes retained the same digest")
+	}
+}
+
+func TestFormatIsTheDigestIdentityForm(t *testing.T) {
+	const xSHA256 = "sha256:2d711642b726b04401627ca9fbac32f5c8530fb1903cc4db02258717921a4881"
+	sum := sha256.Sum256([]byte("x"))
+	digest, err := identity.Digest(strings.NewReader("x"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if formatted := identity.Format(sum[:]); formatted != xSHA256 || digest != formatted {
+		t.Fatalf("Format = %q, Digest = %q, want %q", formatted, digest, xSHA256)
 	}
 }

@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	api "github.com/TomazVidovic533/stackpuddle/artifacts"
-	testkit "github.com/TomazVidovic533/stackpuddle/tests/testkit/artifacts"
+	testkit "github.com/TomazVidovic533/stackpuddle/tests/internal/testkit/artifacts"
 )
 
 func TestPublicBuildAndInspect(t *testing.T) {

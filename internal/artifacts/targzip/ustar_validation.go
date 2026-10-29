@@ -42,14 +42,6 @@ func validateParentDirectories(name string, seen map[string]bool) error {
 	}
 	return nil
 }
-func validatePadding(data []byte, headerOffset int, size int64, name string) error {
-	paddingStart := headerOffset + tarBlockSize + int(size)
-	paddingBytes := int((tarBlockSize - size%tarBlockSize) % tarBlockSize)
-	if paddingStart < 0 || paddingStart+paddingBytes > len(data) || !bytes.Equal(data[paddingStart:paddingStart+paddingBytes], make([]byte, paddingBytes)) {
-		return envelope.Reject(envelope.InvalidEnvelope, envelope.Padding, name, "nonzero or truncated padding for %q", name)
-	}
-	return nil
-}
 func hasHiddenTarNameBytes(header []byte) bool {
 	for _, field := range [][]byte{header[:ustarNameEnd], header[ustarPrefixStart:ustarReservedStart]} {
 		if terminator := bytes.IndexByte(field, 0); terminator >= 0 && !bytes.Equal(field[terminator+1:], make([]byte, len(field)-terminator-1)) {

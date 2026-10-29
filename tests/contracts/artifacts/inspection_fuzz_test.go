@@ -6,7 +6,7 @@ import (
 
 	"github.com/TomazVidovic533/stackpuddle/internal/artifacts/envelope"
 	"github.com/TomazVidovic533/stackpuddle/internal/artifacts/targzip"
-	"github.com/TomazVidovic533/stackpuddle/tests/testkit/artifacts"
+	"github.com/TomazVidovic533/stackpuddle/tests/internal/testkit/artifacts"
 )
 
 func FuzzInspect(f *testing.F) {

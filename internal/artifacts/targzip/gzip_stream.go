@@ -2,7 +2,6 @@ package targzip
 
 import (
 	"bufio"
-	"bytes"
 	"compress/flate"
 	"compress/gzip"
 	"errors"
@@ -12,57 +11,77 @@ import (
 	"github.com/TomazVidovic533/stackpuddle/internal/artifacts/envelope"
 )
 
-func readGzip(source io.Reader, maxTarBytes, maxCompressedBytes int64) ([]byte, error) {
+// gzipStream is one canonical gzip member read within the compressed and expanded ceilings.
+// Inspect reads its expanded bytes as a stream and calls finish once they are drained.
+type gzipStream struct {
+	compressed  *io.LimitedReader
+	buffered    *bufio.Reader
+	reader      *gzip.Reader
+	maxTarBytes int64
+}
+
+func openGzip(source io.Reader, maxTarBytes, maxCompressedBytes int64) (gzipStream, error) {
 	compressed := &io.LimitedReader{R: source, N: maxCompressedBytes + 1}
 	buffered := bufio.NewReader(compressed)
-	rawHeader, err := buffered.Peek(10)
+	rawHeader, err := buffered.Peek(gzipHeaderSize)
 	if err != nil {
-		return nil, gzipFailure(envelope.GzipHeader, "gzip header", err)
+		return gzipStream{}, gzipFailure(envelope.GzipHeader, "gzip header", err)
 	}
-	if rawHeader[3] != 0 || !bytes.Equal(rawHeader[4:8], []byte{0, 0, 0, 0}) || rawHeader[8] != 2 || rawHeader[9] != 255 {
-		return nil, envelope.Reject(envelope.InvalidEnvelope, envelope.GzipHeader, "", "noncanonical gzip header")
+	if !canonicalGzipHeader(rawHeader) {
+		return gzipStream{}, envelope.Reject(envelope.InvalidEnvelope, envelope.GzipHeader, "", "noncanonical gzip header")
 	}
-	gzipReader, err := gzip.NewReader(buffered)
+	reader, err := gzip.NewReader(buffered)
 	if err != nil {
-		return nil, gzipFailure(envelope.GzipHeader, "gzip header", err)
+		return gzipStream{}, gzipFailure(envelope.GzipHeader, "gzip header", err)
 	}
-	gzipReader.Multistream(false)
-	if !gzipReader.ModTime.IsZero() || gzipReader.OS != 255 || gzipReader.Name != "" || gzipReader.Comment != "" || len(gzipReader.Extra) != 0 {
-		return nil, envelope.Reject(envelope.InvalidEnvelope, envelope.GzipHeader, "", "noncanonical gzip header")
+	reader.Multistream(false)
+	if !reader.ModTime.IsZero() || reader.OS != gzipOSUnknown || reader.Name != "" || reader.Comment != "" || len(reader.Extra) != 0 {
+		return gzipStream{}, envelope.Reject(envelope.InvalidEnvelope, envelope.GzipHeader, "", "noncanonical gzip header")
 	}
-	tarData, err := io.ReadAll(io.LimitReader(gzipReader, maxTarBytes+1))
-	if compressed.N == 0 {
-		return nil, envelope.Reject(envelope.InvalidEnvelope, envelope.CompressedLimit, "", "compressed archive exceeds limit")
+	return gzipStream{compressed: compressed, buffered: buffered, reader: reader, maxTarBytes: maxTarBytes}, nil
+}
+
+// expanded yields the decompressed bytes, capped one byte past the tar ceiling so finish can
+// tell an exact fit from an overflow without reading further.
+func (stream gzipStream) expanded() io.Reader {
+	return io.LimitReader(stream.reader, stream.maxTarBytes+1)
+}
+
+// finish classifies the member after its expanded bytes were drained: readErr is the first
+// error other than io.EOF that expanded returned, and expandedBytes how many bytes it yielded.
+// The checks keep the order a fully buffered read had, so precedence between failures holds.
+func (stream gzipStream) finish(readErr error, expandedBytes int64) error {
+	if stream.compressed.N == 0 {
+		return envelope.Reject(envelope.InvalidEnvelope, envelope.CompressedLimit, "", "compressed archive exceeds limit")
 	}
-	if err != nil {
-		return nil, gzipFailure(envelope.GzipBody, "gzip body", err)
+	if readErr != nil {
+		return gzipFailure(envelope.GzipBody, "gzip body", readErr)
 	}
-	if int64(len(tarData)) > maxTarBytes {
-		return nil, envelope.Reject(envelope.InvalidEnvelope, envelope.ExpandedLimit, "", "expanded archive exceeds limit")
+	if expandedBytes > stream.maxTarBytes {
+		return envelope.Reject(envelope.InvalidEnvelope, envelope.ExpandedLimit, "", "expanded archive exceeds limit")
 	}
-	if err := gzipReader.Close(); err != nil {
-		return nil, err
+	if err := stream.reader.Close(); err != nil {
+		return err
 	}
-	_, err = buffered.Peek(1)
-	if compressed.N == 0 {
-		return nil, envelope.Reject(envelope.InvalidEnvelope, envelope.CompressedLimit, "", "compressed archive exceeds limit")
+	_, err := stream.buffered.Peek(1)
+	if stream.compressed.N == 0 {
+		return envelope.Reject(envelope.InvalidEnvelope, envelope.CompressedLimit, "", "compressed archive exceeds limit")
 	}
-	if err != io.EOF {
-		if err == nil {
-			return nil, envelope.Reject(envelope.InvalidEnvelope, envelope.TrailingCompressed, "", "trailing compressed bytes or multiple gzip members")
-		}
-		return nil, err
+	if err == io.EOF {
+		return nil
 	}
-	return tarData, nil
+	if err == nil {
+		return envelope.Reject(envelope.InvalidEnvelope, envelope.TrailingCompressed, "", "trailing compressed bytes or multiple gzip members")
+	}
+	return err
 }
 
 // Only known encoding failures are malformed input. Arbitrary source failures
 // keep their original identity and are not misclassified as archive rejections.
 func gzipFailure(code envelope.Code, operation string, cause error) error {
-	wrapped := fmt.Errorf("%s: %w", operation, cause)
-	var corrupt flate.CorruptInputError
-	if errors.Is(cause, io.EOF) || errors.Is(cause, io.ErrUnexpectedEOF) || errors.Is(cause, gzip.ErrHeader) || errors.Is(cause, gzip.ErrChecksum) || errors.As(cause, &corrupt) {
-		return &envelope.Error{Category: envelope.InvalidEnvelope, Code: code, Message: wrapped.Error(), Cause: cause}
+	_, corrupt := errors.AsType[flate.CorruptInputError](cause)
+	if corrupt || errors.Is(cause, io.EOF) || errors.Is(cause, io.ErrUnexpectedEOF) || errors.Is(cause, gzip.ErrHeader) || errors.Is(cause, gzip.ErrChecksum) {
+		return envelope.RejectCause(envelope.InvalidEnvelope, code, "", cause, "%s: %v", operation, cause)
 	}
-	return wrapped
+	return fmt.Errorf("%s: %w", operation, cause)
 }
