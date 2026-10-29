@@ -1,0 +1,55 @@
+apiVersion: stackpuddle/v1
+kind: Project
+metadata:
+  name: {{NAME}}
+spec:
+  definitions:
+    kv-store:
+      path: definitions/kv-store
+  modules:
+    primary:
+      definition: kv-store
+      options: {note: primary}
+    secondary:
+      definition: kv-store
+      options: {note: secondary}
+  workloads:
+    api:
+      type: service
+      image: mirror.gcr.io/library/busybox@sha256:a7dbc319b1438115a207e11930dc4bb3e643dcb3ec0bdd694bb36cd8fad289ec
+      command: [sleep, "3600"]
+      prerequisites:
+        - job: slow
+    worker:
+      type: service
+      image: mirror.gcr.io/library/busybox@sha256:a7dbc319b1438115a207e11930dc4bb3e643dcb3ec0bdd694bb36cd8fad289ec
+      command: [sleep, "3600"]
+    cache:
+      type: service
+      image: mirror.gcr.io/library/busybox@sha256:a7dbc319b1438115a207e11930dc4bb3e643dcb3ec0bdd694bb36cd8fad289ec
+      command: [sleep, "3600"]
+    slow:
+      type: job
+      image: mirror.gcr.io/library/busybox@sha256:a7dbc319b1438115a207e11930dc4bb3e643dcb3ec0bdd694bb36cd8fad289ec
+      command: [sleep, "{{SLOW}}"]
+    report:
+      type: job
+      image: mirror.gcr.io/library/busybox@sha256:a7dbc319b1438115a207e11930dc4bb3e643dcb3ec0bdd694bb36cd8fad289ec
+      command: ["true"]
+    broken:
+      type: job
+      image: mirror.gcr.io/library/busybox@sha256:a7dbc319b1438115a207e11930dc4bb3e643dcb3ec0bdd694bb36cd8fad289ec
+      command: [sh, -c, "exit 3"]
+  applications:
+    web:
+      workloads: [api, worker]
+      default: true
+    data:
+      workloads: [worker, cache]
+  environments:
+    local:
+      runtime:
+        type: compose
+        context: default
+      secrets:
+        provider: local

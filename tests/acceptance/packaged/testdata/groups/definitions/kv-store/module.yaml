@@ -1,0 +1,16 @@
+apiVersion: stackpuddle/v1
+kind: Module
+name: kv-store
+version: 0.1.0
+requires:
+  capabilities: [runtime.compose/1]
+configuration:
+  schema: content/options.schema.json
+workloads:
+  store:
+    type: service
+    image: mirror.gcr.io/library/busybox@sha256:a7dbc319b1438115a207e11930dc4bb3e643dcb3ec0bdd694bb36cd8fad289ec
+    command: [sleep, "3600"]
+    volumes:
+      data:
+        path: /var/lib/kv

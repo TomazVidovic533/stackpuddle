@@ -1,0 +1,23 @@
+apiVersion: stackpuddle/v1
+kind: Project
+metadata:
+  name: {{NAME}}
+spec:
+  workloads:
+    declared:
+      type: service
+      image: {{NAME}}-img:1
+      command: [sleep, "3600"]
+    built:
+      type: service
+      build:
+        context: .
+        dockerfile: Dockerfile
+      command: [sleep, "3600"]
+  environments:
+    local:
+      runtime:
+        type: compose
+        context: default
+      secrets:
+        provider: local
