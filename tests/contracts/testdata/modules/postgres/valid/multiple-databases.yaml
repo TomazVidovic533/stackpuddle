@@ -1,0 +1,65 @@
+resources:
+  memoryMiB: 2048
+  cpus: 2
+hostAccess:
+  enabled: true
+  port: 5433
+startupTimeoutSeconds: 90
+settings:
+  maxConnections: 120
+  sharedBuffersMiB: 256
+users:
+  app_runtime:
+    purpose: runtime
+    passwordSecretRef: app-runtime-password
+    memberOf: [app_writer]
+  app_migrator:
+    purpose: migrations
+    passwordSecretRef: app-migration-password
+  reporting_app:
+    purpose: runtime
+    passwordSecretRef: reporting-app-password
+    memberOf: [reporting_reader]
+  reporting_migrator:
+    purpose: migrations
+    passwordSecretRef: reporting-migration-password
+roles:
+  app_writer:
+    login: false
+  reporting_reader:
+    login: false
+databases:
+  application:
+    owner: app_migrator
+    connectRoles: [app_writer]
+    connectionLimit: 30
+    settings:
+      statementTimeoutMs: 30000
+      lockTimeoutMs: 5000
+    userSettings:
+      app_runtime:
+        statementTimeoutMs: 15000
+      app_migrator:
+        statementTimeoutMs: 0
+        lockTimeoutMs: 10000
+    schemas:
+      app:
+        grants:
+          app_writer:
+            tables: [SELECT, INSERT, UPDATE, DELETE]
+            sequences: [USAGE, SELECT]
+  reporting:
+    owner: reporting_migrator
+    connectRoles: [reporting_reader]
+    connectionLimit: 10
+    settings:
+      statementTimeoutMs: 300000
+      lockTimeoutMs: 10000
+    userSettings:
+      reporting_migrator:
+        statementTimeoutMs: 0
+    schemas:
+      reports:
+        grants:
+          reporting_reader:
+            tables: [SELECT]

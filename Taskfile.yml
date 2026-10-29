@@ -1,0 +1,60 @@
+version: '3'
+
+tasks:
+  test:
+    desc: Run unit, contract, and local integration tests
+    cmds:
+      - task: test:unit
+      - task: test:contract
+      - task: test:integration
+
+  test:unit:
+    desc: Test isolated rules and value contracts
+    cmds:
+      - go test -race -count=1 ./tests/unit/...
+
+  test:contract:
+    desc: Test published schemas and archive conformance
+    cmds:
+      - go test -race -count=1 ./tests/contracts/...
+
+  test:integration:
+    desc: Test archive building and real stream and filesystem boundaries
+    cmds:
+      - go test -race -count=1 ./tests/integration/...
+
+  test:acceptance:
+    desc: Packaged consumer acceptance (not implemented yet)
+    cmds:
+      - |
+        echo "Acceptance suite is not implemented: packaged consumer verification is incomplete." >&2
+        exit 1
+
+  test:fuzz:
+    desc: Fuzz archive inspection for 30 seconds
+    cmds:
+      - go test ./tests/contracts/artifacts -run='^$' -fuzz=FuzzInspect -fuzztime=30s -parallel=2
+
+  check:
+    desc: Check formatting, static analysis, dependencies, and local tests
+    cmds:
+      - task: check:format
+      - go vet ./...
+      - go mod verify
+      - task: test
+
+  check:format:
+    internal: true
+    cmds:
+      - |
+        unformatted=$(gofmt -l .)
+        if [ -n "$unformatted" ]; then
+          echo "Go files need formatting:"
+          printf '%s\n' "$unformatted"
+          exit 1
+        fi
+
+  verify:
+    desc: Compatibility alias for check
+    cmds:
+      - task: check

@@ -1,0 +1,7 @@
+services:
+  postgres:
+    ports:
+      - target: 5432
+        published: "${STACKPUDDLE_POSTGRES_HOST_PORT:-5432}"
+        host_ip: 127.0.0.1
+        protocol: tcp

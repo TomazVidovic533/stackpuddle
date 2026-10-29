@@ -1,0 +1,13 @@
+apiVersion: stackpuddle/v1
+kind: Module
+name: postgres
+version: 0.1.0-alpha.1
+configuration:
+  schema: content/configuration/schema.json
+  defaults: content/configuration/defaults.yaml
+runtimes:
+  compose:
+    file: content/runtime/compose.yaml
+    hostAccessFile: content/runtime/compose.host.yaml
+provisioning:
+  contract: content/provisioning/contract.md

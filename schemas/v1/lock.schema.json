@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:stackpuddle:schema:v1:lock",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "bundle", "modules"],
+  "properties": {
+    "apiVersion": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/apiVersion" },
+    "kind": { "type": "string", "const": "Lock" },
+    "bundle": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/bundleIdentity" },
+    "modules": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/moduleName" },
+      "additionalProperties": { "$ref": "urn:stackpuddle:schema:v1:definitions#/$defs/moduleArtifact" }
+    }
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:stackpuddle:schema:v1:definitions",
+  "$defs": {
+    "apiVersion": { "type": "string", "const": "stackpuddle/v1" },
+    "moduleName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 63,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+    },
+    "semanticVersion": { "type": "string", "format": "semver" },
+    "sha256": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "artifactURL": {
+      "type": "string",
+      "format": "uri",
+      "anyOf": [
+        { "pattern": "^https://[^/?#@:]+(?::[0-9]+)?(?:/[^?#]*)?$" },
+        { "pattern": "^http://127\\.0\\.0\\.1(?::[0-9]+)?/[^?#]*$" }
+      ]
+    },
+    "bundleIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "source", "digest"],
+      "properties": {
+        "version": { "$ref": "#/$defs/semanticVersion" },
+        "source": { "$ref": "#/$defs/artifactURL" },
+        "digest": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "moduleArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "source", "format", "digest"],
+      "properties": {
+        "version": { "$ref": "#/$defs/semanticVersion" },
+        "source": { "$ref": "#/$defs/artifactURL" },
+        "format": { "type": "string", "const": "tar+gzip" },
+        "digest": { "$ref": "#/$defs/sha256" }
+      }
+    }
+  }
+}

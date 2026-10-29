@@ -1,0 +1,10 @@
+resources:
+  memoryMiB: 1024
+  cpus: 1
+hostAccess:
+  enabled: false
+  port: 5432
+startupTimeoutSeconds: 60
+settings:
+  maxConnections: 100
+  sharedBuffersMiB: 128

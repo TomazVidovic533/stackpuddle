@@ -1,0 +1,33 @@
+users:
+  app_api:
+    purpose: runtime
+    passwordSecretRef: app-api-password
+    memberOf: [app_writer]
+  app_worker:
+    purpose: runtime
+    passwordSecretRef: app-worker-password
+    memberOf: [app_writer]
+  app_reporting:
+    purpose: runtime
+    passwordSecretRef: app-reporting-password
+    memberOf: [app_reader]
+  app_migrator:
+    purpose: migrations
+    passwordSecretRef: app-migration-password
+roles:
+  app_writer:
+    login: false
+  app_reader:
+    login: false
+databases:
+  application:
+    owner: app_migrator
+    connectRoles: [app_writer, app_reader]
+    schemas:
+      app:
+        grants:
+          app_writer:
+            tables: [SELECT, INSERT, UPDATE, DELETE]
+            sequences: [USAGE]
+          app_reader:
+            tables: [SELECT]

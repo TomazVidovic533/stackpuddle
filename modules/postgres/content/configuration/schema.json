@@ -1,0 +1,237 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:stackpuddle:module:postgres:configuration",
+  "description": "Consumer configuration for one PostgreSQL instance.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["users", "roles", "databases"],
+  "properties": {
+    "resources": { "$ref": "#/$defs/resources" },
+    "hostAccess": { "$ref": "#/$defs/hostAccess" },
+    "startupTimeoutSeconds": { "$ref": "#/$defs/startupTimeoutSeconds" },
+    "settings": { "$ref": "#/$defs/settings" },
+    "databases": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "$ref": "#/$defs/identifier",
+        "not": { "enum": ["postgres", "template0", "template1"] }
+      },
+      "additionalProperties": { "$ref": "#/$defs/database" }
+    },
+    "users": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "$ref": "#/$defs/roleName" },
+      "additionalProperties": { "$ref": "#/$defs/user" }
+    },
+    "roles": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "$ref": "#/$defs/roleName" },
+      "additionalProperties": { "$ref": "#/$defs/permissionRole" }
+    }
+  },
+  "$defs": {
+    "resources": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "memoryMiB": {
+          "description": "Instance memory allocation in mebibytes.",
+          "type": "integer",
+          "minimum": 256
+        },
+        "cpus": {
+          "description": "Instance CPU allocation; fractional CPU units are allowed.",
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      }
+    },
+    "hostAccess": {
+      "description": "Optional host access through loopback only in the local profile.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "port": { "type": "integer", "minimum": 1, "maximum": 65535 }
+      },
+      "if": {
+        "required": ["enabled"],
+        "properties": {
+          "enabled": { "const": true }
+        }
+      },
+      "then": { "required": ["port"] }
+    },
+    "startupTimeoutSeconds": {
+      "description": "Instance startup timeout in seconds.",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 3600
+    },
+    "settings": {
+      "description": "Instance-wide PostgreSQL settings.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "maxConnections": { "type": "integer", "minimum": 4 },
+        "sharedBuffersMiB": {
+          "description": "Shared buffer allocation in mebibytes.",
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "database": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["owner", "connectRoles", "schemas"],
+      "properties": {
+        "connectionLimit": {
+          "description": "Database connection limit: -1 is unlimited; 0 blocks ordinary connections.",
+          "type": "integer",
+          "minimum": -1,
+          "maximum": 2147483647
+        },
+        "settings": {
+          "$ref": "#/$defs/timeouts",
+          "description": "Timeout settings scoped to this database."
+        },
+        "owner": {
+          "$ref": "#/$defs/roleName",
+          "description": "Migration user that owns the database and its declared schemas."
+        },
+        "connectRoles": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/roleName" }
+        },
+        "schemas": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": { "$ref": "#/$defs/schemaName" },
+          "additionalProperties": { "$ref": "#/$defs/schema" }
+        },
+        "userSettings": {
+          "description": "Timeout settings for each user within this database.",
+          "type": "object",
+          "propertyNames": { "$ref": "#/$defs/roleName" },
+          "additionalProperties": { "$ref": "#/$defs/timeouts" }
+        }
+      }
+    },
+    "timeouts": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "statementTimeoutMs": {
+          "description": "Statement timeout in milliseconds; 0 disables the timeout.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "lockTimeoutMs": {
+          "description": "Lock acquisition timeout in milliseconds; 0 disables the timeout.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        }
+      }
+    },
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 63,
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "not": { "pattern": "^pg_" }
+    },
+    "secretRef": {
+      "description": "Logical secret identifier, not a secret value or file path.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+    },
+    "roleName": {
+      "$ref": "#/$defs/identifier",
+      "not": { "enum": ["postgres", "public", "none", "current_user", "session_user", "current_role"] }
+    },
+    "schemaName": {
+      "$ref": "#/$defs/identifier",
+      "not": { "const": "information_schema" }
+    },
+    "permissionRole": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["login"],
+      "properties": {
+        "login": { "const": false }
+      }
+    },
+    "user": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["purpose", "passwordSecretRef"],
+      "properties": {
+        "purpose": { "enum": ["runtime", "migrations"] },
+        "passwordSecretRef": { "$ref": "#/$defs/secretRef" },
+        "memberOf": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/roleName" }
+        }
+      },
+      "if": {
+        "required": ["purpose"],
+        "properties": {
+          "purpose": { "const": "runtime" }
+        }
+      },
+      "then": { "required": ["memberOf"] },
+      "else": {
+        "not": { "required": ["memberOf"] }
+      }
+    },
+    "schema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["grants"],
+      "properties": {
+        "grants": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": { "$ref": "#/$defs/roleName" },
+          "additionalProperties": { "$ref": "#/$defs/grant" }
+        }
+      }
+    },
+    "grant": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tables": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["SELECT", "INSERT", "UPDATE", "DELETE"] }
+        },
+        "sequences": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["USAGE", "SELECT"] }
+        }
+      },
+      "anyOf": [
+        { "required": ["tables"] },
+        { "required": ["sequences"] }
+      ],
+      "description": "Schema USAGE and listed privileges on existing and future objects created by the database owner."
+    }
+  }
+}

@@ -1,0 +1,21 @@
+users:
+  catalog_app:
+    purpose: runtime
+    passwordSecretRef: catalog-app-password
+    memberOf: [catalog_writer]
+  catalog_migrator:
+    purpose: migrations
+    passwordSecretRef: catalog-migration-password
+roles:
+  catalog_writer:
+    login: false
+databases:
+  catalog:
+    owner: catalog_migrator
+    connectRoles: [catalog_writer]
+    schemas:
+      public:
+        grants:
+          catalog_writer:
+            tables: [SELECT, INSERT, UPDATE, DELETE]
+            sequences: [USAGE]
