@@ -39,8 +39,10 @@ Schema validation cannot enforce these reference and state checks. Their impleme
 before this contract can authorize provisioning.
 
 Installation state must identify owned resources and completed operations before reconciliation can
-adopt them. State storage and recovery belong to the future CLI design. A matching name alone does
-not prove ownership.
+adopt them. The control-plane engine owns that state and its recovery (decision 0035): it journals
+each step, and a driver settles an interrupted step by observing the server. A matching name alone does
+not prove ownership; each created role, schema and database carries a `stackpuddle:` comment marker
+naming its scope.
 
 ## Access and ownership
 
