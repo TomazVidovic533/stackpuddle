@@ -1,0 +1,3 @@
+services:
+  store:
+    image: ghcr.io/example/audit-store:0.3.1

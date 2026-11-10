@@ -5,6 +5,10 @@ version: 0.1.0
 dataFormat: audit-log/1
 requires:
   capabilities: [runtime.compose/1]
+runtimes:
+  compose:
+    file: content/runtime/compose.yaml
+    hostAccessFile: content/runtime/compose.host.yaml
 configuration:
   schema: content/options.schema.json
   defaults: content/defaults.yaml

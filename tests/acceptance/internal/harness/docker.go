@@ -99,10 +99,18 @@ func (s *Stack) Published(project string) []string {
 	return out
 }
 
-// RemoveVolume removes exactly one named volume. It is what `docker volume prune -a` does to an unused
-// volume; the suite never prunes the host [RV8].
+// RemoveVolume removes exactly one named volume of this stack, after the stopped containers that still mount
+// it: Docker refuses to remove a volume a container references, running or not. A volume outside this stack's
+// Compose projects is never touched [RV8].
 func (s *Stack) RemoveVolume(name string) {
 	s.t.Helper()
+	project := docker(s.t, "volume", "inspect", "--format", "{{index .Labels \"com.docker.compose.project\"}}", name)
+	if !s.owns(project) {
+		s.t.Fatalf("harness: volume %s belongs to Compose project %q, not to this stack %s", name, project, s.Name)
+	}
+	for _, id := range lines(docker(s.t, "ps", "-a", "-q", "--filter", "volume="+name, "--filter", projectLabel+project)) {
+		docker(s.t, "rm", id)
+	}
 	docker(s.t, "volume", "rm", name)
 }
 
@@ -126,17 +134,23 @@ func (s *Stack) cleanup() {
 			continue
 		}
 		for _, p := range lines(strings.TrimSpace(string(out))) {
-			if strings.Contains(p, s.Name) {
+			if s.owns(p) {
 				found[p] = true
 			}
 		}
 	}
 	for p := range found {
-		if !strings.Contains(p, s.Name) {
+		if !s.owns(p) {
 			continue
 		}
 		if o, err := exec.Command("docker", "compose", "-p", p, "down", "-v", "--timeout", "1").CombinedOutput(); err != nil {
 			s.t.Errorf("cleanup: docker compose -p %s down -v: %v\n%s", p, err, o)
 		}
 	}
+}
+
+// owns reports whether a Compose project belongs to this stack: its name is the disposable name or extends it
+// at a dash boundary. A foreign project that merely contains the name is not owned [RV8].
+func (s *Stack) owns(project string) bool {
+	return project == s.Name || strings.HasPrefix(project, s.Name+"-")
 }

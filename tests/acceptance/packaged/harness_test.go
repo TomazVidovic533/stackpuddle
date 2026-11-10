@@ -36,6 +36,9 @@ const (
 // pack is the verified packaged set every test runs on. TestMain fills it or fails the package by name.
 var pack packaged.Manifest
 
+// cliCopy is the 0700 copy of the CLI whose hash TestMain re-checked; every command runs it, never the manifest path.
+var cliCopy string
+
 func TestMain(m *testing.M) {
 	path := os.Getenv(manifestEnv)
 	if path == "" {
@@ -50,9 +53,20 @@ func TestMain(m *testing.M) {
 		fmt.Fprintf(os.Stderr, "packaged: the manifest %s is not usable: %v\n", path, err)
 		os.Exit(1)
 	}
+	cliDir, err := os.MkdirTemp("", "packaged-cli-")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "packaged: cannot create a directory for the CLI copy: %v\n", err)
+		os.Exit(1)
+	}
+	if cliCopy, err = pack.CLI.CopyVerified(cliDir); err != nil {
+		_ = os.RemoveAll(cliDir)
+		fmt.Fprintf(os.Stderr, "packaged: the CLI cannot be copied for use: %v\n", err)
+		os.Exit(1)
+	}
 	for _, args := range [][]string{{"info"}, {"compose", "version"}} {
 		if out, err := exec.Command("docker", args...).CombinedOutput(); err != nil {
 			fmt.Fprintf(os.Stderr, "packaged: Docker is required and `docker %s` failed: %v\n%s\n", args[0], err, out)
+			_ = os.RemoveAll(cliDir)
 			os.Exit(1)
 		}
 	}
@@ -60,7 +74,18 @@ func TestMain(m *testing.M) {
 	for name, a := range pack.Modules {
 		fmt.Printf("packaged identities: module %s archive sha256 %s\n", name, a.SHA256)
 	}
-	os.Exit(m.Run())
+	code := m.Run()
+	_ = os.RemoveAll(cliDir)
+	os.Exit(code)
+}
+
+// secretsKey returns a fresh base64 32-byte key, so no two stacks share a secrets key.
+func secretsKey() string {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		panic(err)
+	}
+	return base64.StdEncoding.EncodeToString(b)
 }
 
 func random(n int) string {
@@ -96,7 +121,7 @@ func newStack(t *testing.T, files map[string]string) *stack {
 		content = strings.NewReplacer("{{NAME}}", s.name, "{{SLOW}}", "1").Replace(content)
 		write(t, filepath.Join(s.dir, path), content)
 	}
-	key := base64.StdEncoding.EncodeToString(bytes.Repeat([]byte{3}, 32))
+	key := secretsKey()
 	s.vars = []string{"PATH=" + os.Getenv("PATH"), "HOME=" + os.Getenv("HOME"), "DOCKER_HOST=" + os.Getenv("DOCKER_HOST"),
 		"STACKPUDDLE_STATE_DIR=" + s.state, "STACKPUDDLE_CACHE_DIR=" + t.TempDir(), "STACKPUDDLE_SECRETS_KEY=" + key}
 	t.Cleanup(s.cleanup)
@@ -166,8 +191,14 @@ func (s *stack) consumerFiles(bundleModule string) map[string]string {
 		s.srv.URL, bundleDigest, s.srv.URL, digest)
 	project := strings.Replace(string(fixture), "name: consumer", "name: "+s.name, 1)
 	project = strings.Replace(project, "\nspec:\n", "\nspec:\n  manifest: stackpuddle.manifest.yaml\n  lock: stackpuddle.lock.yaml\n", 1)
+	// The shared fixture declares no application; `up` without one has nothing to select (kept out of the fixture
+	// because other tests read it).
+	withApp := strings.Replace(project, "\n  environments:\n", "\n  applications:\n    app:\n      workloads: [migrate, app]\n      default: true\n  environments:\n", 1)
+	if withApp == project {
+		t.Fatal("the consumer fixture has no environments block to place the default application before")
+	}
 	return map[string]string{
-		"stackpuddle.yaml":          project,
+		"stackpuddle.yaml":          withApp,
 		"stackpuddle.lock.yaml":     lock,
 		"stackpuddle.manifest.yaml": "apiVersion: stackpuddle/v1\nkind: Manifest\nbundleVersion: 0.1.0-alpha.1\nmodules:\n  - postgres\n",
 	}
@@ -177,7 +208,7 @@ func (s *stack) command(args ...string) *exec.Cmd {
 	if !contains(args, "--env") {
 		args = append(append([]string(nil), args...), "--env", "local")
 	}
-	cmd := exec.Command(pack.CLI.Path, args...)
+	cmd := exec.Command(cliCopy, args...)
 	cmd.Dir, cmd.Env = s.dir, s.vars
 	return cmd
 }
@@ -388,16 +419,16 @@ func (s *stack) stateFiles(pattern string) []string {
 }
 
 // cleanup removes this project's objects with `docker compose -p <project> down -v` and the image tags this
-// test created, and nothing else [RV8].
+// test created, and nothing else [RV8]. When the engine cannot name the project (a run that failed before it
+// recorded state), it falls back to the compose projects whose name starts with this stack's own name.
 func (s *stack) cleanup() {
-	out, err := s.command("inspect", "env/local", "--view", "state", "--output", "json").Output()
-	var doc struct {
-		ComposeProject string `json:"composeProject"`
-	}
-	if err == nil && json.Unmarshal(out, &doc) == nil && strings.Contains(doc.ComposeProject, s.name) {
-		if o, err := exec.Command("docker", "compose", "-p", doc.ComposeProject, "down", "-v", "--timeout", "1").CombinedOutput(); err != nil {
-			s.t.Errorf("cleanup: docker compose -p %s down -v: %v\n%s", doc.ComposeProject, err, o)
+	for _, project := range s.composeProjects() {
+		if o, err := exec.Command("docker", "compose", "-p", project, "down", "-v", "--timeout", "1").CombinedOutput(); err != nil {
+			s.t.Errorf("cleanup: docker compose -p %s down -v: %v\n%s", project, err, o)
 		}
+	}
+	if left := s.leftoverProjects(); len(left) > 0 {
+		s.t.Errorf("cleanup left compose projects behind: %v", left)
 	}
 	for _, tag := range s.tags {
 		_ = exec.Command("docker", "rmi", tag).Run()
@@ -405,6 +436,42 @@ func (s *stack) cleanup() {
 	if s.canarySeen {
 		s.t.Error("a canary secret value appeared in CLI output")
 	}
+}
+
+// composeProjects names the compose projects to remove: the recorded one, else every project (running or
+// stopped) whose name starts with this stack's unique name.
+func (s *stack) composeProjects() []string {
+	out, err := s.command("inspect", "env/local", "--view", "state", "--output", "json").Output()
+	var doc struct {
+		ComposeProject string `json:"composeProject"`
+	}
+	if err == nil && json.Unmarshal(out, &doc) == nil && strings.HasPrefix(doc.ComposeProject, s.name) {
+		return []string{doc.ComposeProject}
+	}
+	listed, err := exec.Command("docker", "compose", "ls", "-a", "--format", "json").Output()
+	if err != nil {
+		s.t.Errorf("cleanup: docker compose ls: %v", err)
+		return nil
+	}
+	names, err := packaged.OwnedComposeProjects(listed, s.name)
+	if err != nil {
+		s.t.Errorf("cleanup: %v", err)
+	}
+	return names
+}
+
+// leftoverProjects lists the projects, including stopped ones, still carrying this stack's name.
+func (s *stack) leftoverProjects() []string {
+	listed, err := exec.Command("docker", "compose", "ls", "-a", "--format", "json").Output()
+	if err != nil {
+		s.t.Errorf("cleanup: docker compose ls after down: %v", err)
+		return nil
+	}
+	names, err := packaged.OwnedComposeProjects(listed, s.name)
+	if err != nil {
+		s.t.Errorf("cleanup: %v", err)
+	}
+	return names
 }
 
 func mustJSON(v any) []byte {

@@ -5,7 +5,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"reflect"
 	"regexp"
 	"strings"
 	"testing"
@@ -32,7 +31,6 @@ func TestPostgresModuleDraftReferences(t *testing.T) {
 	}
 	references := [][]string{
 		{"configuration", "schema"}, {"configuration", "defaults"},
-		{"runtimes", "compose", "file"}, {"runtimes", "compose", "hostAccessFile"},
 		{"provisioning", "contract"},
 	}
 	for _, parts := range references {
@@ -62,31 +60,89 @@ func TestPostgresModuleDraftArchive(t *testing.T) {
 	}
 }
 
-func TestPostgresComposeSource(t *testing.T) {
-	t.Parallel()
-	root := postgresModuleRoot(t)
-	base := readPostgresDocument(t, filepath.Join(root, "content", "runtime", "compose.yaml"))
-	if _, exists := base["name"]; exists {
-		t.Fatal("Compose project identity must be selected by the caller")
-	}
-	service := documents.ObjectAt(t, map[string]any(base), []string{"services", "postgres"})
-	image, _ := service["image"].(string)
-	if !regexp.MustCompile(`^postgres:18\.[0-9]+-bookworm@sha256:[0-9a-f]{64}$`).MatchString(image) {
-		t.Fatalf("expected a digest-pinned PostgreSQL 18 image, got %q", image)
-	}
-	for _, field := range []string{"ports", "container_name", "privileged", "network_mode"} {
-		if _, exists := service[field]; exists {
-			t.Fatalf("base service must not set %s", field)
+// postgresTLSFlags is the server TLS flag text module.yaml, the engine's runtime truth, must carry byte for byte.
+const postgresTLSFlags = "-c ssl=on -c ssl_cert_file=/run/stackpuddle/tls/server.crt " +
+	"-c ssl_key_file=/run/stackpuddle/tls/server.key -c hba_file=/run/stackpuddle/pg_hba.conf"
+
+// postgresHBALine is the whole line that writes pg_hba.conf: nothing may come before or after the three rules.
+const postgresHBALine = "printf '%s\\n' 'local all all peer' 'hostnossl all all all reject' " +
+	"'hostssl all all all scram-sha-256' > /run/stackpuddle/pg_hba.conf"
+
+var (
+	postgresTrust     = regexp.MustCompile(`\btrust\b`)
+	postgresPlaintext = regexp.MustCompile(`(?m)'host all|'host\s`)
+	postgresSSLOff    = regexp.MustCompile(`ssl\s*=\s*(off|false|0|no)\b`)
+)
+
+// postgresPostureProblems lists every way module.yaml text departs from the TLS-only posture.
+func postgresPostureProblems(text string) []string {
+	var problems []string
+	lines := strings.Split(text, "\n")
+	hbaLines, tlsEnds := 0, 0
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == postgresHBALine {
+			hbaLines++
+		}
+		if strings.HasSuffix(trimmed, postgresTLSFlags) {
+			tlsEnds++
 		}
 	}
-	volume := documents.ObjectAt(t, map[string]any(base), []string{"volumes", "postgres_data"})
-	if _, exists := volume["name"]; exists {
-		t.Fatal("volume identity must remain scoped to the Compose project")
+	if tlsEnds != 1 {
+		problems = append(problems, "the TLS flags must end exactly one command line, with nothing after them")
 	}
-	health := documents.ObjectAt(t, map[string]any(base), []string{"services", "postgres", "healthcheck"})
-	wantProbe := []any{"CMD", "pg_isready", "-h", "127.0.0.1", "-p", "5432", "-U", "postgres", "-d", "postgres"}
-	if !reflect.DeepEqual(health["test"], wantProbe) {
-		t.Fatalf("expected a TCP engine probe, got %v", health["test"])
+	if hbaLines != 1 {
+		problems = append(problems, "the pg_hba line must be exactly the three rules in order (reject before accept)")
+	}
+	if postgresTrust.MatchString(text) {
+		problems = append(problems, "trust token")
+	}
+	if postgresPlaintext.MatchString(text) {
+		problems = append(problems, "plaintext host rule")
+	}
+	if postgresSSLOff.MatchString(text) {
+		problems = append(problems, "ssl switched off")
+	}
+	return problems
+}
+
+func TestPostgresModuleTLSPosture(t *testing.T) {
+	t.Parallel()
+	raw, err := os.ReadFile(filepath.Join(postgresModuleRoot(t), "module.yaml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, problem := range postgresPostureProblems(string(raw)) {
+		t.Errorf("module.yaml: %s", problem)
+	}
+}
+
+func TestPostgresModuleTLSPostureRejectsWeakening(t *testing.T) {
+	t.Parallel()
+	raw, err := os.ReadFile(filepath.Join(postgresModuleRoot(t), "module.yaml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	good := string(raw)
+	hba := strings.TrimPrefix(postgresHBALine, "printf '%s\\n' ")
+	hba = strings.TrimSuffix(hba, " > /run/stackpuddle/pg_hba.conf")
+	cases := map[string]string{
+		"trust rule first":    strings.Replace(good, "'local all all peer'", "'hostssl all all 0.0.0.0/0 trust' 'local all all peer'", 1),
+		"trust rule last":     strings.Replace(good, hba, hba+" 'host all all all trust'", 1),
+		"ssl off after":       strings.Replace(good, postgresTLSFlags, postgresTLSFlags+" -c ssl=off", 1),
+		"plaintext host":      strings.Replace(good, hba, hba+" 'host all all all scram-sha-256'", 1),
+		"reject after accept": strings.Replace(good, "'hostnossl all all all reject' 'hostssl all all all scram-sha-256'", "'hostssl all all all scram-sha-256' 'hostnossl all all all reject'", 1),
+	}
+	if problems := postgresPostureProblems(good); len(problems) != 0 {
+		t.Fatalf("shipped module.yaml has problems: %v", problems)
+	}
+	for name, text := range cases {
+		if text == good {
+			t.Fatalf("%s: mutation did not change the text", name)
+		}
+		if len(postgresPostureProblems(text)) == 0 {
+			t.Errorf("%s: weakened module.yaml passes the posture check", name)
+		}
 	}
 }
 
@@ -97,31 +153,4 @@ func postgresModuleRoot(t *testing.T) string {
 		t.Fatal(err)
 	}
 	return root
-}
-
-// postgresTLSFlags is the server TLS flag text the engine's runtime truth (module.yaml) and the
-// Compose draft must both carry, byte for byte.
-const postgresTLSFlags = "-c ssl=on -c ssl_cert_file=/run/stackpuddle/tls/server.crt " +
-	"-c ssl_key_file=/run/stackpuddle/tls/server.key -c hba_file=/run/stackpuddle/pg_hba.conf"
-
-func TestPostgresTLSParity(t *testing.T) {
-	t.Parallel()
-	root := postgresModuleRoot(t)
-	hba := "'local all all peer' 'hostnossl all all all reject' 'hostssl all all all scram-sha-256'"
-	for _, file := range []string{"module.yaml", filepath.Join("content", "runtime", "compose.yaml")} {
-		raw, err := os.ReadFile(filepath.Join(root, file))
-		if err != nil {
-			t.Fatal(err)
-		}
-		text := string(raw)
-		if !strings.Contains(text, postgresTLSFlags) {
-			t.Errorf("%s: missing the TLS flag text %q", file, postgresTLSFlags)
-		}
-		if !strings.Contains(text, hba) {
-			t.Errorf("%s: pg_hba lines missing or out of order (reject must precede accept)", file)
-		}
-		if regexp.MustCompile(`(?m)'host all|'host\s`).MatchString(text) || strings.Contains(text, "hostssl all all all trust") {
-			t.Errorf("%s: plaintext or trust host rule", file)
-		}
-	}
 }

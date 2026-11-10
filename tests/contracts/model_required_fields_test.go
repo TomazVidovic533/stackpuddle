@@ -61,6 +61,8 @@ func requiredRows() []requiredRow {
 	lock := other(subjectLock, "valid/bundle-lock", "stackpuddle.lock.yaml")
 	bundle := other(subjectBundle, "valid/bundle-lock", "bundle.yaml")
 	module := other(subjectModule, "../../../modules/postgres", "module.yaml")
+	// The postgres module declares no Compose runtime; the custom-definition case covers runtimes.
+	customModule := other(subjectModule, "valid/custom-definition/definitions/audit-store", "module.yaml")
 	versionInfo := other(subjectVersionInfo, "valid/version-info-engine", "version-info.json")
 	bindings := other(subjectBindings, "valid/bindings-every-consumer", "expected/bindings.json")
 	manifest := func(schema, remove string) requiredRow {
@@ -145,7 +147,7 @@ func requiredRows() []requiredRow {
 		module("module#/version", "/version"),
 		module("module#/properties/requires/capabilities", "/requires/capabilities"),
 		module("module#/properties/configuration/schema", "/configuration/schema"),
-		module("module#/properties/runtimes/properties/compose/file", "/runtimes/compose/file"),
+		customModule("module#/properties/runtimes/properties/compose/file", "/runtimes/compose/file"),
 		module("module#/properties/provisioning/contract", "/provisioning/contract"),
 		bundle("bundle#/apiVersion", "/apiVersion"),
 		bundle("bundle#/kind", "/kind"),

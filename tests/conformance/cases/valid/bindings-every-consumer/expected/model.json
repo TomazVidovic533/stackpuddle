@@ -9,7 +9,7 @@
       "declared": {
         "column": 7,
         "file": "stackpuddle.yaml",
-        "line": 82,
+        "line": 79,
         "origin": "yaml"
       }
     },
@@ -17,7 +17,7 @@
       "declared": {
         "column": 7,
         "file": "stackpuddle.yaml",
-        "line": 77,
+        "line": 74,
         "origin": "yaml"
       }
     },
@@ -57,7 +57,7 @@
       "declared": {
         "column": 5,
         "file": "stackpuddle.yaml",
-        "line": 88,
+        "line": 85,
         "origin": "yaml"
       }
     },
@@ -122,11 +122,6 @@
       },
       {
         "consumer": "module/queue",
-        "delivery": {
-          "environment": {
-            "UPSTREAM_HOST": "host"
-          }
-        },
         "dependency": "api",
         "source": {
           "export": "http",

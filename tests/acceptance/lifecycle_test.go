@@ -6,6 +6,8 @@
 package acceptance_test
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -252,8 +254,20 @@ func TestStopKeepsDataRemoveEditsDeclarationDestroyNeedsDeleteIntent(t *testing.
 		// remove edits the declaration only: the volumes stay and the YAML loses the workload.
 		fx := s.Fixture
 		before := s.ReadProject("stackpuddle.yaml")
+		// Bindings still name the workload, so removing it would leave an invalid project: refused, nothing changed.
+		if r := s.Run("remove", "workload/"+fx.Edit.Container, "--env", env); r.Exit == 0 || !strings.Contains(r.Stdout+r.Stderr, "remove.leaves_invalid_project") {
+			t.Fatalf("remove of a bound workload: %s, want a refusal with remove.leaves_invalid_project", r)
+		}
+		if s.ReadProject("stackpuddle.yaml") != before {
+			t.Fatal("a refused remove edited the declaration")
+		}
+		if got := s.Inventory(project).Volumes; strings.Join(got, ",") != strings.Join(volumes, ",") {
+			t.Fatalf("a refused remove changed runtime volumes: %v then %v", volumes, got)
+		}
+		s.WriteProject("stackpuddle.yaml", withoutBindings(before, "workload/"+fx.Edit.Container))
+		unbound := s.ReadProject("stackpuddle.yaml")
 		s.Must("remove", "workload/"+fx.Edit.Container, "--env", env)
-		if s.ReadProject("stackpuddle.yaml") == before {
+		if s.ReadProject("stackpuddle.yaml") == unbound {
 			t.Fatal("remove did not edit the declaration")
 		}
 		if got := s.Inventory(project).Volumes; strings.Join(got, ",") != strings.Join(volumes, ",") {
@@ -268,6 +282,25 @@ func TestStopKeepsDataRemoveEditsDeclarationDestroyNeedsDeleteIntent(t *testing.
 			t.Fatalf("destroy --delete-data left %+v", got)
 		}
 	})
+}
+
+// withoutBindings drops every list item under spec.bindings whose consumer is the given ref. A binding runs
+// from its "- consumer:" line to the next list item or the next two-space key.
+func withoutBindings(yaml, consumer string) string {
+	var out []string
+	dropping := false
+	for _, line := range strings.Split(yaml, "\n") {
+		switch {
+		case strings.HasPrefix(line, "    - consumer: "):
+			dropping = strings.TrimPrefix(line, "    - consumer: ") == consumer
+		case line != "" && !strings.HasPrefix(line, "     "):
+			dropping = false
+		}
+		if !dropping {
+			out = append(out, line)
+		}
+	}
+	return strings.Join(out, "\n")
 }
 
 func TestLostDataVolumeShowsLostAndUpRefusesToRecreateItEmpty(t *testing.T) {
@@ -377,8 +410,10 @@ func TestCorruptedArchiveFailsItsDigestAndThePreviousVerifiedCacheStaysUsable(t 
 		if r := s.Run(dry...); r.Exit != 7 {
 			t.Fatalf("a corrupted download: %s, want exit 7 (digest mismatch)", r)
 		}
-		if cached(t, s) != 0 {
-			t.Fatal("a corrupted download entered the cache")
+		// The bundle fetched before the corrupted archive is verified and legitimately cached, so the cache is
+		// not expected to be empty: every entry must hold bytes that hash to its own name.
+		if bad := unverifiedEntries(t, cachedFiles(t, s), s.Server.CorruptedDigests()); bad != "" {
+			t.Fatalf("a corrupted download entered the cache: %s", bad)
 		}
 		s.Server.Corrupt.Store(false)
 		s.Must(dry...)
@@ -415,6 +450,60 @@ func TestCorruptedArchiveFailsItsDigestAndThePreviousVerifiedCacheStaysUsable(t 
 	})
 }
 
+// unverifiedEntries names the first cache entry whose bytes do not hash to the digest in its file name, or hash
+// to one of the corrupted digests; "" when every entry is verified. The CLI names an entry after the digest the
+// lock pins, so the name alone proves nothing: only the content check catches bytes stored before verification.
+func unverifiedEntries(t *testing.T, files, corrupted []string) string {
+	t.Helper()
+	for _, e := range files {
+		data, err := os.ReadFile(e)
+		if err != nil {
+			t.Fatal(err)
+		}
+		sum := sha256.Sum256(data)
+		got := "sha256:" + hex.EncodeToString(sum[:])
+		if want := "sha256:" + strings.TrimSuffix(filepath.Base(e), ".tar.gz"); got != want {
+			return e + " holds " + got + ", not the digest in its name"
+		}
+		for _, bad := range corrupted {
+			if got == bad {
+				return e + " holds the corrupted archive " + bad
+			}
+		}
+	}
+	return ""
+}
+
+func TestUnverifiedEntriesCatchesCorruptBytesStoredUnderThePinnedName(t *testing.T) {
+	dir := t.TempDir()
+	good := []byte("verified archive")
+	bad := []byte("tampered archive")
+	name := func(b []byte) string {
+		sum := sha256.Sum256(b)
+		return filepath.Join(dir, hex.EncodeToString(sum[:])+".tar.gz")
+	}
+	write := func(path string, b []byte) {
+		if err := os.WriteFile(path, b, 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	write(name(good), good)
+	if got := unverifiedEntries(t, []string{name(good)}, nil); got != "" {
+		t.Fatalf("a verified entry was flagged: %s", got)
+	}
+	// Corrupt bytes under the pinned (good) name: the shape a store-before-verify CLI leaves behind.
+	write(name(good), bad)
+	if unverifiedEntries(t, []string{name(good)}, nil) == "" {
+		t.Fatal("corrupt bytes stored under the pinned name went undetected")
+	}
+	// Corrupt bytes whose digest the server reported, even under their own name.
+	write(name(bad), bad)
+	badSum := sha256.Sum256(bad)
+	if unverifiedEntries(t, []string{name(bad)}, []string{"sha256:" + hex.EncodeToString(badSum[:])}) == "" {
+		t.Fatal("an entry holding a reported corrupted digest went undetected")
+	}
+}
+
 func cachedFiles(t *testing.T, s *harness.Stack) []string {
 	t.Helper()
 	files, err := filepath.Glob(filepath.Join(s.Cache, "stackpuddle", "artifacts", "sha256", "*.tar.gz"))
@@ -423,8 +512,6 @@ func cachedFiles(t *testing.T, s *harness.Stack) []string {
 	}
 	return files
 }
-
-func cached(t *testing.T, s *harness.Stack) int { return len(cachedFiles(t, s)) }
 
 func TestRunCreatesADistinctInvocationAndDryRunRunsNothing(t *testing.T) {
 	rows(t, func(t *testing.T, s *harness.Stack) {

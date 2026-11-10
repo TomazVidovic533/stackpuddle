@@ -261,7 +261,7 @@ func (s *Stack) Project(env string) string {
 	s.t.Helper()
 	doc := s.JSON("inspect", "env/"+env, "--view", "state", "--env", env)
 	p := Str(doc, "composeProject")
-	if !strings.Contains(p, s.Name) {
+	if !s.owns(p) {
 		s.t.Fatalf("harness: the Compose project %q of env/%s does not carry the disposable name %q", p, env, s.Name)
 	}
 	s.remember(p)

@@ -4,6 +4,7 @@
 package packaged
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -11,7 +12,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"sort"
+	"strings"
 )
 
 // Artifact is one packaged file and the sha256 it must have.
@@ -33,9 +36,16 @@ func Load(path string) (Manifest, error) {
 	if err != nil {
 		return Manifest{}, fmt.Errorf("read manifest: %w", err)
 	}
+	// A misspelt key or a second document must fail loudly: a silently ignored field would leave an
+	// artifact unverified.
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.DisallowUnknownFields()
 	var m Manifest
-	if err := json.Unmarshal(data, &m); err != nil {
+	if err := dec.Decode(&m); err != nil {
 		return Manifest{}, fmt.Errorf("decode manifest %s: %w", path, err)
+	}
+	if err := dec.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
+		return Manifest{}, fmt.Errorf("decode manifest %s: trailing data after the manifest document", path)
 	}
 	return m, nil
 }
@@ -85,6 +95,28 @@ func (a Artifact) verify(label string) error {
 	return nil
 }
 
+// CopyVerified copies the artifact into dir as an owner-only executable and returns the copy's path. It hashes
+// the bytes it reads once and copies those same bytes, so a file swapped after Verify cannot be run: the copy
+// is re-hashed before it is returned.
+func (a Artifact) CopyVerified(dir string) (string, error) {
+	data, err := os.ReadFile(a.Path)
+	if err != nil {
+		return "", err
+	}
+	sum := sha256.Sum256(data)
+	if got := hex.EncodeToString(sum[:]); got != a.SHA256 {
+		return "", fmt.Errorf("%s hashes to %s, the manifest says %s", a.Path, got, a.SHA256)
+	}
+	dest := filepath.Join(dir, filepath.Base(a.Path))
+	if err := os.WriteFile(dest, data, 0o700); err != nil {
+		return "", err
+	}
+	if got, err := HashFile(dest); err != nil || got != a.SHA256 {
+		return "", fmt.Errorf("the copy %s does not hash to %s (%v)", dest, a.SHA256, err)
+	}
+	return dest, nil
+}
+
 // HashFile returns the lowercase hex sha256 of the file at path.
 func HashFile(path string) (string, error) {
 	f, err := os.Open(path)
@@ -97,4 +129,23 @@ func HashFile(path string) (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(h.Sum(nil)), nil
+}
+
+// OwnedComposeProjects returns the names in `docker compose ls --format json` output that start with name, the
+// unique name of one test stack. Cleanup removes only these, so a foreign project, or another stack of the
+// same suite, is never touched [RV8].
+func OwnedComposeProjects(lsJSON []byte, name string) ([]string, error) {
+	var projects []struct {
+		Name string `json:"Name"`
+	}
+	if err := json.Unmarshal(lsJSON, &projects); err != nil {
+		return nil, fmt.Errorf("decode docker compose ls output: %w", err)
+	}
+	owned := []string{}
+	for _, p := range projects {
+		if name != "" && strings.HasPrefix(p.Name, name) {
+			owned = append(owned, p.Name)
+		}
+	}
+	return owned, nil
 }

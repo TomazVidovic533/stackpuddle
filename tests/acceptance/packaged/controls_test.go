@@ -3,6 +3,7 @@
 package packaged_test
 
 import (
+	"slices"
 	"strings"
 	"syscall"
 	"testing"
@@ -62,11 +63,41 @@ func TestControls_CancelFromASecondProcessStopsAtAStepBoundaryAndRerunsNothing(t
 	if str(old, "status") != "cancelled" || at(old, "continuedBy") != nil {
 		t.Fatalf("operation = %v, want cancelled and not continued", old)
 	}
-	if steps, _ := at(old, "steps").([]any); len(steps) == 0 {
+	completed := completedObjects(old)
+	if len(completed) == 0 {
 		t.Fatal("the cancelled operation lost its partial outcomes")
 	}
 	next := s.json("up", "--timeout", "3m")
 	if at(next, "operation", "continues") != nil {
 		t.Fatalf("the next up continued a cancelled operation: %v", next["operation"])
 	}
+	for _, object := range stepObjects(next) {
+		if slices.Contains(completed, object) {
+			t.Fatalf("the next up has a step for %s, which the cancelled operation completed (%v)", object, completed)
+		}
+	}
+}
+
+// completedObjects lists the objects of the operation's steps that finished, so a rerun of one is visible.
+func completedObjects(operation map[string]any) []string {
+	var objects []string
+	steps, _ := at(operation, "steps").([]any)
+	for _, raw := range steps {
+		step, _ := raw.(map[string]any)
+		if str(step, "status") == "completed" {
+			objects = append(objects, str(step, "object"))
+		}
+	}
+	return objects
+}
+
+// stepObjects lists the objects of the steps of an up result's operation.
+func stepObjects(up map[string]any) []string {
+	var objects []string
+	steps, _ := at(up, "operation", "steps").([]any)
+	for _, raw := range steps {
+		step, _ := raw.(map[string]any)
+		objects = append(objects, str(step, "object"))
+	}
+	return objects
 }

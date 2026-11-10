@@ -3,10 +3,10 @@
 package packaged_test
 
 import (
-	"bytes"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"testing"
 
 	"github.com/TomazVidovic533/stackpuddle/model"
@@ -44,13 +44,13 @@ process.stdout.write(result.value);
 `
 
 // The packaged SDK tarball, installed into a scratch project, writes the model of the YAML fixture it
-// mirrors, byte for byte.
+// mirrors. Origins differ by design (the SDK is not a YAML file), so only they are ignored.
 func TestSDK_PackedTarballWritesTheCanonicalModelOfTheYAMLFixture(t *testing.T) {
 	scratch := t.TempDir()
 	write(t, filepath.Join(scratch, "package.json"), `{"name":"scratch","private":true,"type":"module"}`)
 	write(t, filepath.Join(scratch, ".npmrc"), "save-exact=true\n")
 	write(t, filepath.Join(scratch, "smoke.mjs"), sdkScript)
-	add := exec.Command("pnpm", "add", pack.SDK.Path, "--ignore-workspace", "--prefer-offline", "--ignore-scripts")
+	add := exec.Command("pnpm", "add", pack.SDK.Path, "--ignore-workspace", "--offline", "--ignore-scripts")
 	add.Dir = scratch
 	if out, err := add.CombinedOutput(); err != nil {
 		t.Fatalf("pnpm add %s: %v\n%s", pack.SDK.Path, err, out)
@@ -72,7 +72,7 @@ func TestSDK_PackedTarballWritesTheCanonicalModelOfTheYAMLFixture(t *testing.T) 
 		t.Fatalf("the YAML fixture does not load: %v", diags)
 	}
 	want := model.Encode(project)
-	if !bytes.Equal(bytes.TrimSpace(emitted), bytes.TrimSpace(want)) {
-		t.Fatalf("the SDK model differs from the canonical model of the YAML fixture\nsdk:  %s\nyaml: %s", emitted, want)
+	if !reflect.DeepEqual(withoutProvenance(decodeAny(t, string(emitted))), withoutProvenance(decodeAny(t, string(want)))) {
+		t.Fatalf("the SDK model differs from the canonical model of the YAML fixture, ignoring origins\nsdk:  %s\nyaml: %s", emitted, want)
 	}
 }

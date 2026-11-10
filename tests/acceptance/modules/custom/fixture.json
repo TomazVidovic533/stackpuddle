@@ -8,5 +8,6 @@
   "consumers": ["app", "probe"],
   "killRefs": ["module/db"],
   "edit": {"file": "stackpuddle.yaml", "old": "APP_EDIT: before", "new": "APP_EDIT: after", "container": "app"},
-  "unsupported": "unsupported"
+  "unsupported": "unsupported",
+  "pending": "SP-M09-050: delivery into a module instance's workload"
 }

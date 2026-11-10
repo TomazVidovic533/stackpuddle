@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -30,7 +31,8 @@ func TestImage_ADeclaredImageAndABuildAreRecordedAndAMovedTagDoesNotUpgradeThem(
 	s := newStack(t, dirFiles(t, "testdata/build"))
 	tag := s.name + "-img:1"
 	s.tags = append(s.tags, tag)
-	docker(t, "tag", busybox, tag) // pulled by the harness's first use; the tag is this test's own
+	docker(t, "pull", busybox)
+	docker(t, "tag", busybox, tag) // the tag is this test's own and the only one removed
 	s.mustRun("up", "--all", "--timeout", "5m")
 	recorded := s.recordedImageIDs()
 	if len(recorded) < 2 {
@@ -41,13 +43,31 @@ func TestImage_ADeclaredImageAndABuildAreRecordedAndAMovedTagDoesNotUpgradeThem(
 	other := filepath.Join(t.TempDir(), "Dockerfile")
 	write(t, other, "FROM "+busybox+"\nLABEL sp.moved=yes\n")
 	docker(t, "build", "-q", "-t", tag, "-f", other, filepath.Dir(other))
+	moved := docker(t, "image", "inspect", "--format", "{{.Id}}", tag)
+	if slices.Contains(recorded, moved) {
+		t.Fatalf("the moved tag has the recorded image ID %s, so the test moved nothing", moved)
+	}
 
-	again := s.mustRun("up", "--all", "--timeout", "5m")
-	after := s.recordedImageIDs()
-	if strings.Join(after, ",") != strings.Join(recorded, ",") {
+	s.mustRun("up", "--all", "--timeout", "5m")
+	if after := s.recordedImageIDs(); !slices.Equal(after, recorded) {
 		t.Fatalf("a repeat up upgraded the recorded artifact: %v -> %v", recorded, after)
 	}
-	if !regexp.MustCompile(`(?i)differ|drift|moved|changed`).MatchString(again.stdout + again.stderr) {
-		t.Fatalf("a repeat up did not report the difference:\n%s%s", again.stdout, again.stderr)
+	for _, id := range s.containerImageIDs() {
+		if id == moved {
+			t.Fatalf("a container runs the moved tag's image %s, want only recorded images %v", moved, recorded)
+		}
+		if !slices.Contains(recorded, id) {
+			t.Fatalf("a container runs image %s, which is not a recorded one (%v)", id, recorded)
+		}
 	}
+}
+
+// containerImageIDs returns the image ID each of this stack's containers was created from.
+func (s *stack) containerImageIDs() []string {
+	s.t.Helper()
+	containers := strings.Fields(docker(s.t, "ps", "-a", "-q", "--filter", "name="+s.name))
+	if len(containers) == 0 {
+		s.t.Fatalf("no container of %s exists to check", s.name)
+	}
+	return strings.Fields(docker(s.t, append([]string{"inspect", "--format", "{{.Image}}"}, containers...)...))
 }

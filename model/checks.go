@@ -431,13 +431,27 @@ func (l *loader) checkBindings() Diagnostics {
 			diagnostics = append(diagnostics, newDiagnostic(BindingCapabilityMismatch, item.at.location("/source"),
 				fmt.Sprintf("dependency %q needs %s but export %q offers %s", binding.ref.Dependency, dependency.Capability, export.Key, export.Capability)))
 		}
-		if _, hasDelivery := binding.delivery.get(); hasDelivery && binding.ref.Consumer.kind == ObjectClient {
-			diagnostics = append(diagnostics, newDiagnostic(BindingDeliveryUnsupported, item.at.location("/delivery"),
-				"a client runs outside StackPuddle, so nothing can deliver values to it"))
+		if _, hasDelivery := binding.delivery.get(); hasDelivery {
+			if reason, refused := deliveryRefusal(binding.ref.Consumer.kind); refused {
+				diagnostics = append(diagnostics, newDiagnostic(BindingDeliveryUnsupported, item.at.location("/delivery"), reason))
+			}
 		}
 	}
 	diagnostics = append(diagnostics, l.deliveryConflicts()...)
 	return append(diagnostics, l.unboundDependencies(first)...)
+}
+
+// deliveryRefusal says why a consumer kind cannot receive a delivery. A module instance's workload
+// is refused until the module port can carry values into it; deliveryTarget keeps that branch for then.
+func deliveryRefusal(consumer ObjectKind) (string, bool) {
+	switch consumer {
+	case ObjectClient:
+		return "a client runs outside StackPuddle, so nothing can deliver values to it", true
+	case ObjectModule:
+		return "delivery into a module instance's workload is not supported yet: the module port cannot carry values into it", true
+	default:
+		return "", false
+	}
 }
 
 // deliveryTarget is the workload a delivery writes into: the consumer workload, or the contributed

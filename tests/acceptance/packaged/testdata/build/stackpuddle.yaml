@@ -11,7 +11,7 @@ spec:
     built:
       type: service
       build:
-        context: .
+        context: image
         dockerfile: Dockerfile
       command: [sleep, "3600"]
   environments:

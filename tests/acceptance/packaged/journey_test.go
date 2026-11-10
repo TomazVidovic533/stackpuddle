@@ -23,11 +23,13 @@ func TestJourney_PackagedCLIAndModuleArchiveRunTheLifecycle(t *testing.T) {
 	}
 
 	one, two := s.json("run", "migrate"), s.json("run", "migrate")
-	if str(one, "id") == "" && str(one, "operation", "id") == "" {
-		t.Fatalf("run printed no invocation ID: %v", one)
+	for _, done := range []map[string]any{one, two} {
+		if code, ok := at(done, "exitCode").(float64); !ok || code != 0 {
+			t.Fatalf("run migrate = %v, want exitCode 0", done)
+		}
 	}
-	if string(mustJSON(one)) == string(mustJSON(two)) {
-		t.Fatalf("two runs printed the same document, want two IDs: %v", one)
+	if str(one, "invocation") == "" || str(one, "invocation") == str(two, "invocation") {
+		t.Fatalf("two runs have invocations %q and %q, want two distinct IDs", str(one, "invocation"), str(two, "invocation"))
 	}
 
 	live := s.run("check", "--live")

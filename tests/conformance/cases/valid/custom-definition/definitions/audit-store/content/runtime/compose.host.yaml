@@ -1,0 +1,4 @@
+services:
+  store:
+    ports:
+      - 127.0.0.1:9400:9400

@@ -31,6 +31,19 @@ type Server struct {
 	URL     string
 	Corrupt atomic.Bool
 	http    *httptest.Server
+	// corruptedDigests are the digests of the bytes served while Corrupt is set.
+	corruptedDigests []string
+}
+
+// CorruptedDigests returns the digest of each module archive as served while Corrupt is set. A cache that
+// holds a file named by one of them has stored unverified bytes.
+func (s *Server) CorruptedDigests() []string { return append([]string(nil), s.corruptedDigests...) }
+
+// corrupted returns data with one byte flipped, so it no longer matches the digest the lock names.
+func corrupted(data []byte) []byte {
+	out := append([]byte(nil), data...)
+	out[len(out)/2] ^= 0xff
+	return out
 }
 
 func (s *Stack) archive(m Module) ([]byte, string) {
@@ -97,13 +110,18 @@ func (s *Stack) serve() {
 	for _, m := range s.Fixture.Modules {
 		data, digest := s.archive(m)
 		all = append(all, served{m, data, digest})
+		bad := corrupted(data)
+		badDigest, err := artifacts.Digest(bytes.NewReader(bad))
+		if err != nil {
+			t.Fatal(err)
+		}
+		srv.corruptedDigests = append(srv.corruptedDigests, badDigest)
 		mux.HandleFunc("/"+m.Name+".tar.gz", func(w http.ResponseWriter, _ *http.Request) {
-			out := data
 			if srv.Corrupt.Load() {
-				out = append([]byte(nil), data...)
-				out[len(out)/2] ^= 0xff
+				_, _ = w.Write(bad)
+				return
 			}
-			_, _ = w.Write(out)
+			_, _ = w.Write(data)
 		})
 	}
 	srv.http = httptest.NewServer(mux) // listens on 127.0.0.1 only

@@ -81,6 +81,9 @@ type Fixture struct {
 	Edit     Edit     `json:"edit"`
 	// Unsupported is a folder (relative to the fixture) of a project that requires an unsupported capability.
 	Unsupported string `json:"unsupported"`
+	// Pending names the work that has not landed yet. A pending fixture does not run the lifecycle rows: it
+	// must be refused by check with binding.delivery_unsupported, so the gap cannot pass silently.
+	Pending string `json:"pending"`
 }
 
 // Env returns the environment at index i.
@@ -114,7 +117,12 @@ func Run(t *testing.T, root string, row func(t *testing.T, s *Stack)) {
 	}
 	for _, folder := range Folders(t, root) {
 		t.Run(filepath.Base(folder), func(t *testing.T) {
-			row(t, Open(t, Config{CLI: cli, Fixture: folder}))
+			s := Open(t, Config{CLI: cli, Fixture: folder})
+			if s.Fixture.Pending != "" {
+				s.requireCheckRefusesPending()
+				return
+			}
+			row(t, s)
 		})
 	}
 }
@@ -234,4 +242,13 @@ func (s *Stack) UnsupportedDir() string {
 	dir := s.t.TempDir()
 	s.copyTree(filepath.Join(s.cfg.Fixture, s.Fixture.Unsupported), dir, nil)
 	return dir
+}
+
+// requireCheckRefusesPending proves a pending fixture is refused by name rather than skipped.
+func (s *Stack) requireCheckRefusesPending() {
+	s.t.Helper()
+	r := s.Run("check", "--output", "json")
+	if r.Exit == 0 || !strings.Contains(r.Stdout, "binding.delivery_unsupported") {
+		s.t.Fatalf("pending fixture (%s): check %s, want a non-zero exit with binding.delivery_unsupported", s.Fixture.Pending, r)
+	}
 }

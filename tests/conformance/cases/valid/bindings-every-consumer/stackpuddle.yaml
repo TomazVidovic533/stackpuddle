@@ -71,9 +71,6 @@ spec:
       source:
         object: workload/api
         export: http
-      delivery:
-        environment:
-          UPSTREAM_HOST: host
     - consumer: module/audit
       dependency: api
       source:

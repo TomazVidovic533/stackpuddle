@@ -1,0 +1,5 @@
+{
+  "description": "A delivery to a module instance, whose workload the module port cannot yet write into.",
+  "root": "stackpuddle.yaml",
+  "subject": "project"
+}

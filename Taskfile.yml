@@ -23,9 +23,11 @@ tasks:
       - go test -race -count=1 ./tests/unit/... ./internal/...
 
   test:contract:
-    desc: Test published schemas, archive conformance and inspection allocation
+    desc: Test published schemas, archive conformance, inspection allocation and the packaged acceptance manifest decoding
     cmds:
       - go test -race -count=1 ./tests/contracts/...
+      # Untagged, this builds only the manifest files of the packaged suite, so no Docker is needed.
+      - go test -race -count=1 ./tests/acceptance/packaged/
 
   test:conformance:
     desc: Run the shared model conformance cases
@@ -36,15 +38,6 @@ tasks:
     desc: Test archive building against real files and stream failures
     cmds:
       - go test -race -count=1 ./tests/filesystem/...
-
-  test:integration:
-    desc: Run the Docker-backed tests (needs Docker Compose)
-    preconditions:
-      - sh: docker compose version
-        msg: "test:integration needs Docker Compose: `docker compose version` failed"
-    cmds:
-      - go vet -tags integration ./tests/integration/...
-      - go test -race -count=1 -v -tags integration ./tests/integration/...
 
   test:acceptance:
     desc: Run the consumer lifecycle and packaged acceptance suites (needs Docker Compose and STACKPUDDLE_CLI, the absolute path of a built stackpuddle binary)
@@ -75,7 +68,6 @@ tasks:
       - go mod verify -modfile=tools.mod
       - task: check:api
       - task: check:decision-record-immutable
-      - task: check:integration-tags
       - task: test
 
   check:format:
@@ -120,20 +112,6 @@ tasks:
           [ -z "$changed" ] || { echo "check:decision-record-immutable: $file was $state at $base; only its '- Status:' line may change" >&2; status=1; }
         done
         exit $status
-
-  check:integration-tags:
-    desc: Require the integration build constraint on every Go file under tests/integration
-    cmds:
-      - |
-        files=$(find tests/integration -name '*.go' -type f) || { echo "check:integration-tags: cannot list tests/integration" >&2; exit 1; }
-        untagged=""
-        for file in $files; do
-          [ "$(head -n 1 "$file")" = "//go:build integration" ] || untagged="$untagged $file"
-        done
-        if [ -n "$untagged" ]; then
-          echo "check:integration-tags: these files lack '//go:build integration' on their first line, so check would run them:$untagged" >&2
-          exit 1
-        fi
 
   check:supply-chain:
     desc: Scan dependencies with govulncheck from tools.mod (needs network access to https://vuln.go.dev)
